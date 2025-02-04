@@ -1,13 +1,12 @@
-package com.example.taskbazaar.servlet;
+package com.example.taskbazaar.service;
 
-import dao.UserDao;
-import model.Post;
+import com.example.taskbazaar.dao.UserDao;
+import com.example.taskbazaar.model.Post;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -19,10 +18,6 @@ import java.util.List;
 
 public class PostServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        response.setHeader("Pragma", "no-cache");
-        response.setHeader("Expires", "0");
 
         List<Post> posts = new ArrayList<>();
 

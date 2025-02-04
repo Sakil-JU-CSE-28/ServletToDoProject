@@ -1,4 +1,4 @@
-package com.example.taskbazaar.servlet;
+package com.example.taskbazaar.service;
 
 
 import jakarta.servlet.ServletException;
@@ -15,11 +15,7 @@ import java.io.IOException;
 public class LogoutServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        response.setHeader("Pragma", "no-cache");
-        response.setHeader("Expires", "0");
+            throws IOException {
 
         // Invalidate the current session
         HttpSession session = request.getSession(false);

@@ -8,12 +8,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page import="java.util.*, java.sql.*" %>
+<%@ page import="com.example.taskbazaar.dao.UserDao" %>
 
 <%
-  response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  response.setHeader("Pragma", "no-cache");
-  response.setHeader("Expires", "0");
-
   // Redirect if user is not logged in
   if (session.getAttribute("username") == null) {
     response.sendRedirect("index.jsp");
@@ -36,12 +33,15 @@
 
   try {
     // Database connection (use your own DB settings here)
-    String dbURL = "jdbc:mysql://localhost:3306/Test";
-    String dbUser = "root";
-    String dbPassword = "1234";
-    conn = DriverManager.getConnection(dbURL, dbUser, dbPassword);
+     UserDao userDao = null;
+      try {
+         userDao = UserDao.getInstance();
+         conn = userDao.connect();
+      } catch (Exception e) {
+          throw new RuntimeException(e);
+      }
 
-    // SQL query to fetch post details
+      // SQL query to fetch post details
     String sql = "SELECT * FROM posts WHERE id = ?";
     stmt = conn.prepareStatement(sql);
     stmt.setInt(1, Integer.parseInt(postId));

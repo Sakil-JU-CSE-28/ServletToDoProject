@@ -1,4 +1,4 @@
-package model;
+package com.example.taskbazaar.model;
 
 public class Post {
     private int id;
@@ -9,6 +9,11 @@ public class Post {
         this.id = id;
         this.title = title;
         this.description = description;
+    }
+
+    public Post(int id, String title) {
+        this.id = id;
+        this.title = title;
     }
 
     public int getId() {

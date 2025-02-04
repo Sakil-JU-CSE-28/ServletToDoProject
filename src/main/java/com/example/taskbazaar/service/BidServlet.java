@@ -1,6 +1,7 @@
-package com.example.taskbazaar.servlet;
+package com.example.taskbazaar.service;
 
-import dao.UserDao;
+import com.example.taskbazaar.dao.UserDao;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,20 +11,21 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.*;
 
-@WebServlet(name = "SavePostServlet", value = "/save")
-public class SavePostServlet extends HttpServlet {
+@WebServlet("/bid")
+public class BidServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // Get the post ID from the form
+        String postId = request.getParameter("postId");
+        System.out.println(postId);
 
-        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        response.setHeader("Pragma", "no-cache");
-        response.setHeader("Expires", "0");
-
+        // Fetch the username from session (assuming the user is logged in)
         HttpSession session = request.getSession(false);
-        String user = (String) session.getAttribute("username");
-        System.out.println(user);
-        String title = request.getParameter("title");
-        String content = request.getParameter("content");
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            response.sendRedirect("index.jsp");
+            return;
+        }
 
         UserDao userDao = null;
         try {
@@ -33,18 +35,20 @@ public class SavePostServlet extends HttpServlet {
         }
         Connection connection = null;
         try {
-            connection = userDao.connect();
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("select * from users where username = '" + user + "'");
+            connection  = userDao.connect();
+            String query = "select * from users where username = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, username);
+            ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             String role = resultSet.getString("role");
 
-            if (role.equals("buyer")) {
-                String insertQuery = "INSERT INTO posts (title, description, author_username) VALUES (?, ?, ?)";
+            if (role.equals("freelancer")) {
+                String insertQuery = "INSERT INTO bid (postId,username) VALUES (?, ?)";
                 PreparedStatement stmt = connection.prepareStatement(insertQuery);
-                stmt.setString(1, title);
-                stmt.setString(2, content);
-                stmt.setString(3, user);
+                stmt.setString(1, postId);
+                stmt.setString(2, username);
+
 
                 stmt.executeUpdate();
 
@@ -74,6 +78,6 @@ public class SavePostServlet extends HttpServlet {
                 throw new RuntimeException(e);
             }
         }
-    }
 
+    }
 }

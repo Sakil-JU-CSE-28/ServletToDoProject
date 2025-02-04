@@ -1,4 +1,4 @@
-package model;
+package com.example.taskbazaar.model;
 
 public class User {
     private String username;

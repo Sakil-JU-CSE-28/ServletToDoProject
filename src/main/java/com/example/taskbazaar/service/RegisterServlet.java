@@ -1,17 +1,15 @@
-package com.example.taskbazaar.servlet;
+package com.example.taskbazaar.service;
 
-import dao.UserDao;
-import model.User;
+import com.example.taskbazaar.dao.UserDao;
+import com.example.taskbazaar.model.User;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 @WebServlet(name = "RegisterServlet", value = "/reg")
 public class RegisterServlet  extends HttpServlet {
@@ -32,7 +30,7 @@ public class RegisterServlet  extends HttpServlet {
         Connection connection = null;
         try {
             connection = userDao.connect();
-            boolean registerd = userDao.register(user,connection.createStatement());
+            boolean registerd = userDao.register(user);
             if(registerd){
                 response.sendRedirect("index.jsp");
             }

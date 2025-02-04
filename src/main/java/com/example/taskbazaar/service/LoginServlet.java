@@ -1,12 +1,12 @@
-package com.example.taskbazaar.servlet;
+package com.example.taskbazaar.service;
 
 import java.io.*;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-import dao.UserDao;
-import model.User;
+import com.example.taskbazaar.dao.UserDao;
+import com.example.taskbazaar.model.User;
+import com.example.taskbazaar.utility.Authentication;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 
@@ -20,7 +20,7 @@ public class LoginServlet extends HttpServlet {
          String username = request.getParameter("username");
          String password = request.getParameter("password");
          User user = new User(username, password);
-        UserDao userDao = null;
+         UserDao userDao = null;
         try {
             userDao = UserDao.getInstance();
         } catch (Exception e) {
@@ -29,7 +29,7 @@ public class LoginServlet extends HttpServlet {
         Connection connection = null;
         try {
             connection = userDao.connect();
-            boolean isValid = userDao.authenticate(user);
+            boolean isValid = Authentication.authenticate(user);
             if(isValid) {
                 HttpSession session = request.getSession();
                 session.setAttribute("username", username);
