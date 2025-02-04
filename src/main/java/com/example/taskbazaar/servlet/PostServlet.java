@@ -1,7 +1,7 @@
-package com.example.taskbazaar;
+package com.example.taskbazaar.servlet;
 
 import dao.UserDao;
-import data.Post;
+import model.Post;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -12,6 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +26,16 @@ public class PostServlet extends HttpServlet {
 
         List<Post> posts = new ArrayList<>();
 
-        UserDao userDao = new UserDao();
-        Pair<Statement, Connection> con = null;
+        UserDao userDao = null;
         try {
-            con = userDao.connect();
-            Statement stmt = con.getLeft();
+            userDao = UserDao.getInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Connection connection = null;
+        try {
+            connection = userDao.connect();
+            Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("select * from posts order by created_at desc");
             while (rs.next()) {
                 Post post = new Post(rs.getInt("id"), rs.getString("title"), rs.getString("description"));
@@ -38,6 +44,14 @@ public class PostServlet extends HttpServlet {
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+
+        finally {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
 
 

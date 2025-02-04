@@ -6,7 +6,7 @@
 
     <servlet>
         <servlet-name>PostServlet</servlet-name>
-        <servlet-class>com.example.taskbazaar.PostServlet</servlet-class>
+        <servlet-class>com.example.taskbazaar.servlet.PostServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>

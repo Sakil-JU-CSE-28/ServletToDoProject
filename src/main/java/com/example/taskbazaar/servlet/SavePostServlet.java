@@ -1,13 +1,11 @@
-package com.example.taskbazaar;
+package com.example.taskbazaar.servlet;
 
 import dao.UserDao;
-import data.User;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.sql.*;
@@ -27,12 +25,16 @@ public class SavePostServlet extends HttpServlet {
         String title = request.getParameter("title");
         String content = request.getParameter("content");
 
-        UserDao userDao = new UserDao();
-        Pair<Statement, Connection> con = null;
+        UserDao userDao = null;
         try {
-            con = userDao.connect();
-            Statement statement = con.getLeft();
-            Connection connection = con.getRight();
+            userDao = UserDao.getInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Connection connection = null;
+        try {
+            connection = userDao.connect();
+            Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("select * from users where username = '" + user + "'");
             resultSet.next();
             String role = resultSet.getString("role");
@@ -67,7 +69,7 @@ public class SavePostServlet extends HttpServlet {
         }
         finally {
             try {
-                con.getRight().close();
+                connection.close();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }

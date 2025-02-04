@@ -1,4 +1,4 @@
-package com.example.taskbazaar;
+package com.example.taskbazaar.servlet;
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -9,7 +9,7 @@ import java.io.IOException;
 
 @WebServlet("/accept")
 public class acceptBidServlet extends HttpServlet {
-    public void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    public void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
 
     }
 }

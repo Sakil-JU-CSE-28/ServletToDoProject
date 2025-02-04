@@ -1,4 +1,4 @@
-package com.example.taskbazaar;
+package com.example.taskbazaar.servlet;
 
 
 import jakarta.servlet.ServletException;

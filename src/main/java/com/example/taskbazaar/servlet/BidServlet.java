@@ -1,4 +1,4 @@
-package com.example.taskbazaar;
+package com.example.taskbazaar.servlet;
 
 import dao.UserDao;
 import jakarta.servlet.ServletException;
@@ -32,13 +32,19 @@ public class BidServlet extends HttpServlet {
             return;
         }
 
-        UserDao userDao = new UserDao();
-        Pair<Statement, Connection> con = null;
+        UserDao userDao = null;
         try {
-            con = userDao.connect();
-            Statement statement = con.getLeft();
-            Connection connection = con.getRight();
-            ResultSet resultSet = statement.executeQuery("select * from users where username = '" + username + "'");
+            userDao = UserDao.getInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Connection connection = null;
+        try {
+            connection  = userDao.connect();
+            String query = "select * from users where username = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, username);
+            ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             String role = resultSet.getString("role");
 
@@ -72,7 +78,7 @@ public class BidServlet extends HttpServlet {
         }
         finally {
             try {
-                con.getRight().close();
+                connection.close();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }

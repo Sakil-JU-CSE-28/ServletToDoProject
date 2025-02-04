@@ -5,9 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.*;
-
-import data.User;
-import org.apache.commons.lang3.tuple.Pair;
+import model.User;
 
 public class UserDao {
 
@@ -22,21 +20,36 @@ public class UserDao {
      * 7. close
      */
 
-    public Pair<Statement,Connection> connect() throws Exception {
-        String url = "jdbc:mysql://localhost:3306/Test";
-        String user = "root";
-        String password = "1234";
 
+    private String url = "jdbc:mysql://localhost:3306/Test";
+    private String user = "root";
+    private String password = "1234";
+
+    private static UserDao singleObject = null;
+    private static Connection connection = null;
+    private UserDao() throws Exception {
         Class.forName("com.mysql.cj.jdbc.Driver");
-        Connection connection = DriverManager.getConnection(url,user,password);
-
-        return Pair.of(connection.createStatement(),connection);
     }
 
-    public boolean authenticate(User user, Statement statement) throws SQLException, NoSuchAlgorithmException {
+    public static UserDao getInstance() throws Exception {
+        if (singleObject == null) {
+            singleObject = new UserDao();
+        }
+        return singleObject;
+    }
+
+    public Connection connect() throws Exception {
+        return connection = DriverManager.getConnection(url,user,password);
+    }
+
+    public boolean authenticate(User user) throws SQLException, NoSuchAlgorithmException {
+
+        String userName = user.getUsername();
         // Retrieve user information from the database
-        String query = "SELECT password, salt FROM users WHERE username = '" + user.getUsername() + "'";
-        ResultSet resultSet = statement.executeQuery(query);
+        String query = "SELECT password, salt FROM users WHERE username = ?";
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+        preparedStatement.setString(1, userName);
+        ResultSet resultSet = preparedStatement.executeQuery();
 
         if (resultSet.next()) {
             String storedHashedPassword = resultSet.getString("password");
@@ -55,7 +68,7 @@ public class UserDao {
         return false; // User not found
     }
 
-    public boolean register(User user,Statement statement) throws SQLException, NoSuchAlgorithmException {
+    public boolean register(User user, Statement statement) throws SQLException, NoSuchAlgorithmException {
         // Generate a salt
         byte[] salt = generateSalt();
 
@@ -65,18 +78,25 @@ public class UserDao {
         // Convert the salt to a string for storage
         String saltString = bytesToHex(salt);
 
-        // Insert the username, hashed password, role, and salt into the database
-        String query = "INSERT INTO users (username, password, role, salt) VALUES ('"
-                + user.getUsername() + "', '"
-                + hashedPassword + "', '"
-                + user.getRole() + "', '"
-                + saltString + "')";
+        String username = user.getUsername();
+        String role = user.getRole();
 
-        // Execute the query
-        statement.executeUpdate(query);
-        statement.close();
+        // Corrected SQL query (placeholders without quotes)
+        String query = "INSERT INTO users (username, password, role, salt) VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, hashedPassword);
+            preparedStatement.setString(3, role);
+            preparedStatement.setString(4, saltString);
+
+            // Execute the query
+            preparedStatement.executeUpdate();
+        }
+
         return true;
     }
+
 
     private String hashPassword(String password, byte[] salt) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");

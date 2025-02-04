@@ -1,7 +1,7 @@
-package com.example.taskbazaar;
+package com.example.taskbazaar.servlet;
 
 import dao.UserDao;
-import data.User;
+import model.User;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,11 +23,16 @@ public class RegisterServlet  extends HttpServlet {
 
        User user = new User(name, password, role);
 
-       UserDao userDao = new UserDao();
-       Pair<Statement, Connection> con = null;
+        UserDao userDao = null;
         try {
-            con = userDao.connect();
-            boolean registerd = userDao.register(user,con.getLeft());
+            userDao = UserDao.getInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Connection connection = null;
+        try {
+            connection = userDao.connect();
+            boolean registerd = userDao.register(user,connection.createStatement());
             if(registerd){
                 response.sendRedirect("index.jsp");
             }
@@ -43,7 +48,7 @@ public class RegisterServlet  extends HttpServlet {
        finally {
 
             try {
-                con.getRight().close();
+                connection.close();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
