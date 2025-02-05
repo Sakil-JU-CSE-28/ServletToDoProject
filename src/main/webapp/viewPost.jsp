@@ -9,6 +9,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page import="java.util.*, java.sql.*" %>
 <%@ page import="com.example.taskbazaar.dao.UserDao" %>
+<%@ page import="com.example.taskbazaar.service.DbConnection" %>
+<%@ page import="com.example.taskbazaar.query.Queries" %>
 
 <%
   // Redirect if user is not logged in
@@ -32,18 +34,15 @@
   ResultSet rs = null;
 
   try {
-    // Database connection (use your own DB settings here)
-     UserDao userDao = null;
+
       try {
-         userDao = UserDao.getInstance();
-         conn = userDao.connect();
+         conn = DbConnection.getConnection();
       } catch (Exception e) {
           throw new RuntimeException(e);
       }
 
-      // SQL query to fetch post details
-    String sql = "SELECT * FROM posts WHERE id = ?";
-    stmt = conn.prepareStatement(sql);
+
+    stmt = conn.prepareStatement(Queries.POST_BY_ID);
     stmt.setInt(1, Integer.parseInt(postId));
     rs = stmt.executeQuery();
 

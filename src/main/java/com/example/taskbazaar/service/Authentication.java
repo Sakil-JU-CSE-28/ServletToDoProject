@@ -1,32 +1,18 @@
-package com.example.taskbazaar.utility;
+package com.example.taskbazaar.service;
 
-import com.example.taskbazaar.dao.UserDao;
 import com.example.taskbazaar.model.User;
 import com.example.taskbazaar.query.Queries;
-
-
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import static com.example.taskbazaar.utility.HashGenerator.hashPassword;
 import static com.example.taskbazaar.utility.HexByteConverter.hexToBytes;
 
 public class Authentication {
 
-    public static boolean authenticate(User user) throws SQLException, NoSuchAlgorithmException {
+    public static boolean authenticate(User user) throws Exception {
 
-        Connection connection;
-        UserDao userDao;
-
-        try {
-            userDao = UserDao.getInstance();
-            connection = userDao.connect();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Connection connection = DbConnection.getConnection();
 
         String userName = user.getUsername();
         // Retrieve user information from the database

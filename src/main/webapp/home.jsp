@@ -81,7 +81,7 @@
 
 <!-- Footer Section -->
 <footer class="bg-light text-center py-4 mt-5">
-    <p>&copy; 2025 MyApp. All rights reserved.</p>
+    <p>&copy; 2025 TaskBazaar. All rights reserved.</p>
 </footer>
 
 <!-- Add Bootstrap JS and dependencies -->
