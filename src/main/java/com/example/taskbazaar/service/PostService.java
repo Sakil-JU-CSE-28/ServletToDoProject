@@ -38,12 +38,26 @@ public class PostService {
         }
     }
 
-    public boolean deletePost(String postId) throws Exception {
+    public boolean deletePost(int postId) throws Exception {
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(Queries.DELETE_POST_BY_ID)) {
-            stmt.setString(1, postId);
+            stmt.setString(1, String.valueOf(postId));
             return stmt.executeUpdate() > 0;
         }
+    }
+
+    public boolean updatePost(int postId,String newTitle, String newContent) {
+        try(Connection conn = DbConnection.getConnection();
+            PreparedStatement stmnt = conn.prepareStatement(Queries.UPDATE_POST_BY_ID)){
+            stmnt.setString(1, newTitle);
+            stmnt.setString(2, newContent);
+            stmnt.setInt(3, postId);
+            int rowsUpdated = stmnt.executeUpdate();
+            return rowsUpdated > 0;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 }

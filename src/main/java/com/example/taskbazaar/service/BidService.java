@@ -17,7 +17,7 @@ public class BidService {
         try (Connection connection = DbConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(Queries.POSTID_BY_AUTHOR)) {
             preparedStatement.setString(1, username);
-            preparedStatement.setString(2, postId);
+            preparedStatement.setInt(2, Integer.parseInt(postId));
             ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next(); // True if the user owns the post
         } catch (Exception e) {

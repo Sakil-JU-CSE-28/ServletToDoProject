@@ -119,6 +119,13 @@
     <%= description %>
   </div>
 
+  <div class="bid-section">
+    <form action="editPost.jsp" method="post">
+      <input type="hidden" name="postId" value="<%= postId %>" />
+      <button class="button" type="submit">Edit Post</button>
+    </form>
+  </div>
+
   <!-- Form for placing a bid -->
   <div class="bid-section">
     <form action="bid" method="post">

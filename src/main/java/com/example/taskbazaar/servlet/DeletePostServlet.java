@@ -3,15 +3,16 @@ package com.example.taskbazaar.servlet;
 import com.example.taskbazaar.service.PostService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
 @WebServlet("/deletePost")
-public class DeletrePostServlet {
+public class DeletePostServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String postId = request.getParameter("postId");
+        int postId = Integer.parseInt(request.getParameter("postId"));
 
         try {
             PostService postService = new PostService();

@@ -18,7 +18,7 @@ public class AdminService {
             ResultSet resultSet = preparedStatement.getResultSet();
             List<Post> posts = new ArrayList<>();
             while (resultSet.next()) {
-                Post post = new Post(resultSet.getInt("id"), resultSet.getString("title"));
+                Post post = new Post(resultSet.getInt("id"), resultSet.getString("title"),resultSet.getString("description"));
                 posts.add(post);
             }
 
