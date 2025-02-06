@@ -9,7 +9,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page import="java.util.*, java.sql.*" %>
 <%@ page import="com.example.taskbazaar.dao.UserDao" %>
-<%@ page import="com.example.taskbazaar.service.DbConnection" %>
+<%@ page import="com.example.taskbazaar.service.DbConnectionService" %>
 <%@ page import="com.example.taskbazaar.query.Queries" %>
 
 <%
@@ -36,7 +36,7 @@
   try {
 
       try {
-         conn = DbConnection.getConnection();
+         conn = DbConnectionService.getConnection();
       } catch (Exception e) {
           throw new RuntimeException(e);
       }

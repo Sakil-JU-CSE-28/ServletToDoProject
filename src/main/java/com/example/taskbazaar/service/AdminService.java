@@ -10,9 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AdminService {
+    private static AdminService adminService = null;
+
+    private AdminService(){
+    }
+
+    public static AdminService getInstance(){
+        return  adminService != null? adminService = new AdminService() : adminService;
+    }
+
     public List<Post> getAllPost() throws Exception {
 
-        try( Connection conn = DbConnection.getConnection()){
+        try( Connection conn = DbConnectionService.getConnection()){
             PreparedStatement preparedStatement = conn.prepareStatement(Queries.ALL_POSTS_BY_DESC);
             preparedStatement.execute();
             ResultSet resultSet = preparedStatement.getResultSet();

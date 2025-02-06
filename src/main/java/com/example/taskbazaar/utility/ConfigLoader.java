@@ -8,7 +8,7 @@ public class ConfigLoader {
     private static Properties properties = new Properties();
 
     static {
-        try (InputStream input = ConfigLoader.class.getClassLoader().getResourceAsStream("app.properties")) {
+        try (InputStream input = ConfigLoader.class.getClassLoader().getResourceAsStream("TaskBazaar.properties")) {
             if (input == null) {
                 throw new RuntimeException("config.properties file not found!");
             }

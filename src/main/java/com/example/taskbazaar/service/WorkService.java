@@ -9,9 +9,15 @@ import java.util.List;
 
 public class WorkService {
 
+    private static WorkService workService = null;
+    private WorkService() {}
+    public static WorkService getInstance() {
+        return workService==null?workService=new WorkService():workService;
+    }
+
     public List<String> getAllWork(String username) {
 
-        try(Connection connection = DbConnection.getConnection();
+        try(Connection connection = DbConnectionService.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(Queries.ORDER_BY_WORKER_USERNAME)) {
             preparedStatement.setString(1, username);
             ResultSet resultSet = preparedStatement.executeQuery();

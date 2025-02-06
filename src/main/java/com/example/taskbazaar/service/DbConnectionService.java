@@ -4,7 +4,7 @@ import com.example.taskbazaar.dao.UserDao;
 
 import java.sql.Connection;
 
-public class DbConnection {
+public class DbConnectionService {
     public static Connection getConnection() throws Exception {
         UserDao userDao = UserDao.getInstance();
         return userDao.connect();

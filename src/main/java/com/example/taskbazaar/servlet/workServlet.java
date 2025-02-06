@@ -13,7 +13,7 @@ import java.util.List;
 
 @WebServlet("/works")
 public class workServlet extends HttpServlet {
-    private final WorkService workService = new WorkService();
+    private final WorkService workService = WorkService.getInstance();
     public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
           HttpSession session = req.getSession();
           String username = (String) session.getAttribute("username");

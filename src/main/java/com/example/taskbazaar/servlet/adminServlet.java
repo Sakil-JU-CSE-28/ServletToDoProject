@@ -1,7 +1,7 @@
 package com.example.taskbazaar.servlet;
 
 import com.example.taskbazaar.service.AdminService;
-import com.example.taskbazaar.service.Response;
+import com.example.taskbazaar.service.ResponseService;
 import com.example.taskbazaar.service.UserService;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -16,14 +16,22 @@ import java.util.List;
 
 @WebServlet("/admin")
 public class adminServlet extends HttpServlet {
-    private final AdminService adminService = new AdminService();
-    private final UserService userService = new UserService();
-    public void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        String username = (String) req.getSession().getAttribute("username");
-        System.out.println(username);
+    private final AdminService adminService = AdminService.getInstance();
+    private final UserService userService = UserService.getInstance();
+    public void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
 
+        String username = (String) req.getSession().getAttribute("username");
+        System.out.println(username + "try to access admin page");
+
+        String userRole = null;
         try {
-            if(userService.getUserRole(username).equals("admin")) {
+            userRole = userService.getUserRole(username);
+        } catch (SQLException e) {
+            log("userRole = " + userRole + " retrieve error");
+           // throw new RuntimeException(e);
+        }
+
+        if("admin".equals(userRole)) {
                 List<Post> posts = null;
                 try {
                     posts = adminService.getAllPost();
@@ -36,13 +44,10 @@ public class adminServlet extends HttpServlet {
             }
             else{
                 System.out.println("adminservlet : unauthorized user try to access this page");
-                Response.sendAlertAndRedirect(res,"Unauthorized!!!","/home");
-
+                ResponseService.sendAlertAndRedirect(res,"Unauthorized!!!","/home");
 
             }
-        } catch (SQLException | ServletException e) {
-            throw new RuntimeException(e);
-        }
+
 
     }
 }

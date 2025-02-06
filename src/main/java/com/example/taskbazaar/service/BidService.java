@@ -10,11 +10,17 @@ import java.util.List;
 
 public class BidService {
 
+    private static BidService bidService = null;
 
+    private BidService() {}
+
+    public static BidService getInstance() {
+        return bidService==null ? bidService = new BidService() : bidService;
+    }
 
     public boolean isPostOwnedByUser(String username, String postId) throws SQLException {
 
-        try (Connection connection = DbConnection.getConnection();
+        try (Connection connection = DbConnectionService.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(Queries.POSTID_BY_AUTHOR)) {
             preparedStatement.setString(1, username);
             preparedStatement.setInt(2, Integer.parseInt(postId));
@@ -30,7 +36,7 @@ public class BidService {
         List<String> bidders = new ArrayList<>();
 
 
-        try (Connection connection = DbConnection.getConnection();
+        try (Connection connection = DbConnectionService.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(Queries.BID_USERNAME_BY_POSTID)) {
             preparedStatement.setString(1, postId);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -46,7 +52,7 @@ public class BidService {
 
 
     public void placeBid(String postId, String username) throws SQLException {
-        try (Connection connection = DbConnection.getConnection()) {
+        try (Connection connection = DbConnectionService.getConnection()) {
             PreparedStatement stmt = connection.prepareStatement(Queries.INSERT_BID);
             stmt.setString(1, postId);
             stmt.setString(2, username);
@@ -59,7 +65,7 @@ public class BidService {
 
     public String getPostIdByBidder(String bidderUsername) {
         String postId = null;
-        try (Connection connection = DbConnection.getConnection();
+        try (Connection connection = DbConnectionService.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(Queries.POST_ID_BY_USER)) {
             preparedStatement.setString(1, bidderUsername);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -76,7 +82,7 @@ public class BidService {
 
     public boolean addBidderToOrder(String postId, String buyerUsername, String workerUsername) {
 
-        try (Connection connection = DbConnection.getConnection();
+        try (Connection connection = DbConnectionService.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(Queries.ADD_BIDER)) {
             preparedStatement.setString(1, postId);
             preparedStatement.setString(2, buyerUsername);
@@ -93,8 +99,8 @@ public class BidService {
 
     public int existOrder(String postId) throws Exception {
 
-        try(Connection connection = DbConnection.getConnection();
-           PreparedStatement statement = connection.prepareStatement(Queries.EXIST_ORDER)){
+        try(Connection connection = DbConnectionService.getConnection();
+            PreparedStatement statement = connection.prepareStatement(Queries.EXIST_ORDER)){
             statement.setString(1, postId);
             ResultSet resultSet = statement.executeQuery();
             resultSet.next();
@@ -104,8 +110,8 @@ public class BidService {
     }
 
     public int existBid(String username) throws Exception {
-        try(Connection connection = DbConnection.getConnection();
-        PreparedStatement statement = connection.prepareStatement(Queries.EXIST_BID)){
+        try(Connection connection = DbConnectionService.getConnection();
+            PreparedStatement statement = connection.prepareStatement(Queries.EXIST_BID)){
             statement.setString(1, username);
             ResultSet resultSet = statement.executeQuery();
             resultSet.next();

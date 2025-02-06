@@ -9,9 +9,15 @@ import java.util.List;
 
 public class PostService {
 
+    private static PostService postService = null;
+    private PostService() {}
+    public static PostService getInstance() {
+        return postService == null ? postService = new PostService() : postService;
+    }
+
     public List<Post> getAllPosts() {
         List<Post> posts = new ArrayList<>();
-        try (Connection connection = DbConnection.getConnection();
+        try (Connection connection = DbConnectionService.getConnection();
              Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(Queries.ALL_POSTS_BY_DESC)) {
             while (rs.next()) {
@@ -25,7 +31,7 @@ public class PostService {
 
     public boolean createPost(String username, String title, String content) {
         if (username == null) return false;
-        try (Connection connection = DbConnection.getConnection();
+        try (Connection connection = DbConnectionService.getConnection();
              PreparedStatement stmt = connection.prepareStatement(Queries.ADD_POST)) {
             stmt.setString(1, title);
             stmt.setString(2, content);
@@ -39,7 +45,7 @@ public class PostService {
     }
 
     public boolean deletePost(int postId) throws Exception {
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = DbConnectionService.getConnection();
              PreparedStatement stmt = conn.prepareStatement(Queries.DELETE_POST_BY_ID)) {
             stmt.setString(1, String.valueOf(postId));
             return stmt.executeUpdate() > 0;
@@ -47,7 +53,7 @@ public class PostService {
     }
 
     public boolean updatePost(int postId,String newTitle, String newContent) {
-        try(Connection conn = DbConnection.getConnection();
+        try(Connection conn = DbConnectionService.getConnection();
             PreparedStatement stmnt = conn.prepareStatement(Queries.UPDATE_POST_BY_ID)){
             stmnt.setString(1, newTitle);
             stmnt.setString(2, newContent);

@@ -9,8 +9,17 @@ import static com.example.taskbazaar.utility.HexByteConverter.bytesToHex;
 import static com.example.taskbazaar.utility.SaltGenerator.generateSalt;
 
 public class RegisterService {
+
+    private static RegisterService registerService = null;
+
+    private RegisterService() {}
+
+    public static RegisterService getInstance() {
+        return registerService==null?registerService=new RegisterService():registerService;
+    }
+
     public boolean register(User user) throws Exception {
-        Connection connection = DbConnection.getConnection();
+        Connection connection = DbConnectionService.getConnection();
         // Generate a salt
         byte[] salt = generateSalt();
 

@@ -8,11 +8,19 @@ import java.sql.ResultSet;
 import static com.example.taskbazaar.utility.HashGenerator.hashPassword;
 import static com.example.taskbazaar.utility.HexByteConverter.hexToBytes;
 
-public class Authentication {
+public class AuthenticationService {
 
-    public static boolean authenticate(User user) throws Exception {
+    private static AuthenticationService authenticationService = null;
 
-        Connection connection = DbConnection.getConnection();
+    private AuthenticationService() {}
+
+    public static AuthenticationService getInstance() {
+        return authenticationService==null ? authenticationService = new AuthenticationService() : authenticationService;
+    }
+
+    public  boolean authenticate(User user) throws Exception {
+
+        Connection connection = DbConnectionService.getConnection();
 
         String userName = user.getUsername();
         // Retrieve user information from the database
