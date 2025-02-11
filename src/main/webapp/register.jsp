@@ -42,6 +42,6 @@
 </form>
 
 <br/>
-<a href="index.jsp">Back to Login</a>
+<a href="index.jsp">Back to Log in</a>
 </body>
 </html>

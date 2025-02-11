@@ -9,14 +9,15 @@ public class Queries {
     public static final String BID_USERNAME_BY_POSTID = "SELECT username FROM bid WHERE postId = ?";
     public static final String INSERT_BID = "INSERT INTO bid (postId, username) VALUES (?, ?)";
     public static final String ALL_POSTS_BY_DESC  = "select * from posts order by created_at desc";
-    public static final String ADD_BIDER = "INSERT INTO Orders(postId, buyer_username, worker_username) VALUES(?, ?, ?)";
+    public static final String ADD_BIDER = "INSERT INTO acceptedbid(postId, buyer_username, worker_username) VALUES(?, ?, ?)";
     public static final String POST_ID_BY_USER = "SELECT postId FROM bid WHERE username = ?";
     public static final String ADD_POST = "INSERT INTO posts (title, description, author_username) VALUES (?, ?, ?)";
-    public static final String  ORDER_BY_WORKER_USERNAME = "select * from Orders where worker_username = ?";
-    public static final String EXIST_ORDER = "SELECT COUNT(*) FROM Orders WHERE postId = ?";
+    public static final String  ORDER_BY_WORKER_USERNAME = "select * from acceptedbid where worker_username = ?";
+    public static final String EXIST_IN_ACCEPTED = "SELECT COUNT(*) FROM acceptedbid WHERE postId = ?";
     public static final String EXIST_BID = "SELECT COUNT(*) FROM bid WHERE username = ?";
     public static final String POST_BY_ID = "SELECT * FROM posts WHERE id = ?";
     public static final String DELETE_POST_BY_ID = "DELETE FROM posts WHERE id = ?";
     public static final String UPDATE_POST_BY_ID = "UPDATE posts SET title = ?, description = ? WHERE id = ?";
+    public static final String FIND_USER_BY_USERNAME = "SELECT COUNT(*) FROM users WHERE username = ?";
 
 }

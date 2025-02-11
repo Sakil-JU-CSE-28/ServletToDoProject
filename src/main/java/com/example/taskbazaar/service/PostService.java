@@ -2,15 +2,20 @@ package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.model.Post;
 import com.example.taskbazaar.query.Queries;
+import com.example.taskbazaar.utility.TaskBazaarLogger;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class PostService {
 
     private static PostService postService = null;
-    private PostService() {}
+    private static Logger logger = TaskBazaarLogger.getLogger();
+    private PostService() {
+        logger.info("PostService created");
+    }
     public static PostService getInstance() {
         return postService == null ? postService = new PostService() : postService;
     }
@@ -24,7 +29,8 @@ public class PostService {
                 posts.add(new Post(rs.getInt("id"), rs.getString("title"), rs.getString("description")));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.info("Error while retrieving posts");
+            throw new RuntimeException(e);
         }
         return posts;
     }
@@ -39,8 +45,8 @@ public class PostService {
             stmt.executeUpdate();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            logger.info("Error while creating post");
+           throw new RuntimeException(e);
         }
     }
 
@@ -61,9 +67,8 @@ public class PostService {
             int rowsUpdated = stmnt.executeUpdate();
             return rowsUpdated > 0;
         } catch (Exception e) {
+            logger.info("Error while updating post");
             throw new RuntimeException(e);
         }
-
     }
-
 }

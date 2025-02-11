@@ -1,16 +1,23 @@
 package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.query.Queries;
+import com.example.taskbazaar.utility.TaskBazaarLogger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class WorkService {
 
     private static WorkService workService = null;
-    private WorkService() {}
+    private static Logger logger = TaskBazaarLogger.getLogger();
+
+    private WorkService() {
+        logger.info("WorkService created");
+    }
     public static WorkService getInstance() {
         return workService==null?workService=new WorkService():workService;
     }
@@ -28,9 +35,9 @@ public class WorkService {
             return works;
 
         } catch (Exception e) {
+            logger.info("Error getting all works");
             throw new RuntimeException(e);
         }
-
     }
 
 }

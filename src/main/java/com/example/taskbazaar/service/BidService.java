@@ -1,18 +1,24 @@
 package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.query.Queries;
+import com.example.taskbazaar.utility.TaskBazaarLogger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class BidService {
 
     private static BidService bidService = null;
+    private static Logger logger = TaskBazaarLogger.getLogger();
 
-    private BidService() {}
+    private BidService() {
+        logger.info("BidService created");
+    }
 
     public static BidService getInstance() {
         return bidService==null ? bidService = new BidService() : bidService;
@@ -27,14 +33,14 @@ public class BidService {
             ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next(); // True if the user owns the post
         } catch (Exception e) {
+            logger.info("Error while checking if post owned by user " + username);
             throw new RuntimeException(e);
         }
     }
 
 
-    public List<String> getBiddersForPost(String postId) throws SQLException {
+    public List<String> getBiddersForPost(String postId){
         List<String> bidders = new ArrayList<>();
-
 
         try (Connection connection = DbConnectionService.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(Queries.BID_USERNAME_BY_POSTID)) {
@@ -45,6 +51,7 @@ public class BidService {
                 bidders.add(resultSet.getString("username"));
             }
         } catch (Exception e) {
+            logger.info("Error while checking if post owned by user " + postId);
             throw new RuntimeException(e);
         }
         return bidders;
@@ -58,6 +65,7 @@ public class BidService {
             stmt.setString(2, username);
             stmt.executeUpdate();
         } catch (Exception e) {
+            logger.info("Error while inserting bid into post " + postId);
             throw new RuntimeException(e);
         }
     }
@@ -72,15 +80,14 @@ public class BidService {
             if (resultSet.next()) {
                 postId = resultSet.getString("postId");
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         } catch (Exception e) {
+            logger.info("Error while checking if post owned by user " + bidderUsername);
             throw new RuntimeException(e);
         }
         return postId;
     }
 
-    public boolean addBidderToOrder(String postId, String buyerUsername, String workerUsername) {
+    public boolean addBidderToAccepted(String postId, String buyerUsername, String workerUsername) {
 
         try (Connection connection = DbConnectionService.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(Queries.ADD_BIDER)) {
@@ -89,24 +96,21 @@ public class BidService {
             preparedStatement.setString(3, workerUsername);
             preparedStatement.executeUpdate();
             return true;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        } catch (Exception e) {
+        }catch (Exception e) {
+            logger.info("Error while adding bidder to accepted post " + postId);
             throw new RuntimeException(e);
         }
     }
 
-    public int existOrder(String postId) throws Exception {
+    public int existInAccepted(String postId) throws Exception {
 
         try(Connection connection = DbConnectionService.getConnection();
-            PreparedStatement statement = connection.prepareStatement(Queries.EXIST_ORDER)){
+            PreparedStatement statement = connection.prepareStatement(Queries.EXIST_IN_ACCEPTED)){
             statement.setString(1, postId);
             ResultSet resultSet = statement.executeQuery();
             resultSet.next();
             return resultSet.getInt(1);
         }
-
     }
 
     public int existBid(String username) throws Exception {
@@ -119,6 +123,4 @@ public class BidService {
         }
     }
 
-
 }
-

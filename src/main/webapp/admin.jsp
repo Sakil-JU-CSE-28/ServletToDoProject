@@ -59,7 +59,7 @@
         <td><%= post.getTitle() %></td>
         <td><%= post.getDescription() %></td>
         <td>
-            <form action="deletePost" method="post">
+            <form action="delete" method="post">
                 <input type="hidden" name="postId" value="<%= post.getId() %>">
                 <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this post?');">Delete</button>
             </form>
