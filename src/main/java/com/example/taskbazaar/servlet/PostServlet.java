@@ -24,8 +24,8 @@ public class PostServlet extends HttpServlet {
     private final BidService bidService = BidService.getInstance();
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-        if(request.getServletPath().equals("/home")){
+        String path = request.getServletPath();
+        if("/home".equals(path)){
             logger.info("retrieving posts for showing home page.....");
             List<Post> posts = postService.getAllPosts();
             request.setAttribute("posts", posts);
@@ -39,8 +39,8 @@ public class PostServlet extends HttpServlet {
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException{
 
         String username = request.getSession().getAttribute("username").toString();
-
-        if(request.getServletPath().equals("/save")) {
+        String path = request.getServletPath();
+        if("/save".equals(path)) {
 
             String title = request.getParameter("title");
             String content = request.getParameter("content");
@@ -56,7 +56,7 @@ public class PostServlet extends HttpServlet {
                 ResponseService.sendAlertAndRedirect(response,"You are not authorized to access this page!!","/home");
             }
         }
-        else if(request.getServletPath().equals("/delete")) {
+        else if("/delete".equals(path)) {
             int postId = Integer.parseInt(request.getParameter("postId"));
 
             try {
@@ -76,7 +76,7 @@ public class PostServlet extends HttpServlet {
                 //throw new ServletException(e);
             }
         }
-        else if(request.getServletPath().equals("/edit")) {
+        else if("/edit".equals(path)) {
             String postId = request.getParameter("postId");
             String title = request.getParameter("title");
             String description = request.getParameter("content");
@@ -102,6 +102,10 @@ public class PostServlet extends HttpServlet {
                     ResponseService.sendAlertAndRedirect(response,"You are not authorized to edit this post!!","/home");
                 }
 
+        }
+        else{
+            logger.info("internal server error");
+            ResponseService.sendAlertAndRedirect(response,"Internal Server Error","/home");
         }
 
     }

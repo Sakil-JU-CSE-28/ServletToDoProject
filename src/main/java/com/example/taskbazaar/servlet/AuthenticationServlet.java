@@ -25,8 +25,9 @@ public class AuthenticationServlet extends HttpServlet {
         String password = request.getParameter("password");
 
         User user = new User(username, password);
+        String path = request.getServletPath();
 
-        if(request.getServletPath().equals("/login")) {
+        if("/login".equals(path)) {
             boolean isValid;
 
             try{
@@ -49,7 +50,7 @@ public class AuthenticationServlet extends HttpServlet {
                 ResponseService.sendAlertAndRedirect(response,"Wrong Credentials!! Try again","index.jsp");
             }
         }
-        else if(request.getServletPath().equals("/reg")){
+        else if("/reg".equals(path)){
             String confirmPassword = request.getParameter("confirmPassword");
             String role = request.getParameter("role");
             if(!password.equals(confirmPassword)) {
@@ -62,10 +63,10 @@ public class AuthenticationServlet extends HttpServlet {
                 System.out.println(registered);
                 if (registered) {
                     logger.info("User " + username + " registered");
-                    response.sendRedirect("index.jsp");
+                    ResponseService.sendAlertAndRedirect(response,"Register Successfully!!","index.jsp");
                 } else {
                     logger.info("User " + username + " is already registered" );
-                    response.sendRedirect("register.jsp");
+                    ResponseService.sendAlertAndRedirect(response,"User is already registered. Please Log in","index.jsp");
                 }
             } catch (Exception e) {
                 logger.info("error registering user......" + e.getMessage());
@@ -82,14 +83,16 @@ public class AuthenticationServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
-        if(request.getServletPath().equals("/logout")) {
+        String path = request.getServletPath();
+
+        if("/logout".equals(path)) {
             logger.info("User " + request.getSession().getAttribute("username") + " logged out");
             HttpSession session = request.getSession(false);
             if (session != null) {
                 session.invalidate();
             }
             logger.info("Redirecting to login.......");
-            response.sendRedirect("index.jsp");
+            ResponseService.sendAlertAndRedirect(response,"Log out successfully!!","login.jsp");
         }
         else{
             logger.info("Internal server error...");

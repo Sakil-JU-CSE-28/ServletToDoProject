@@ -31,7 +31,7 @@ public class adminServlet extends HttpServlet {
 
         if(username == null) {
             logger.info("username is null. Redirecting to login page....");
-            res.sendRedirect(req.getContextPath() + "index.jsp");
+            ResponseService.sendAlertAndRedirect(res,"Error credentials!!","index.jsp");
         }
 
         String userRole = null;
@@ -40,7 +40,7 @@ public class adminServlet extends HttpServlet {
             userRole = userService.getUserRole(username);
         } catch (SQLException e) {
             logger.info("userRole retrieve error : " + e.getMessage());
-            res.sendRedirect(req.getContextPath() + "index.jsp");
+            ResponseService.sendAlertAndRedirect(res,"Internal Server Error!!","index.jsp");
         }
 
         if("admin".equals(userRole)) {
