@@ -4,7 +4,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 public class SaltGenerator {
-    public static byte[] generateSalt() throws NoSuchAlgorithmException {
+    public static byte[] generateSalt() {
         // Create a secure random number generator
         SecureRandom random = new SecureRandom();
 

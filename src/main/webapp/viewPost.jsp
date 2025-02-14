@@ -10,7 +10,7 @@
 <%@ page import="java.util.*, java.sql.*" %>
 <%@ page import="com.example.taskbazaar.dao.UserDao" %>
 <%@ page import="com.example.taskbazaar.service.DbConnectionService" %>
-<%@ page import="com.example.taskbazaar.query.Queries" %>
+<%@ page import="com.example.taskbazaar.utility.Constants" %>
 
 <%
   // Redirect if user is not logged in
@@ -42,7 +42,7 @@
       }
 
 
-    stmt = conn.prepareStatement(Queries.POST_BY_ID);
+    stmt = conn.prepareStatement(Constants.POST_BY_ID);
     stmt.setInt(1, Integer.parseInt(postId));
     rs = stmt.executeQuery();
 

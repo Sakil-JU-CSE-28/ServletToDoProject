@@ -1,104 +1,111 @@
 package com.example.taskbazaar.servlet;
 
-import java.io.*;
-import java.util.logging.Logger;
-
 import com.example.taskbazaar.model.User;
 import com.example.taskbazaar.service.AuthenticationService;
-import com.example.taskbazaar.service.RegisterService;
-import com.example.taskbazaar.service.ResponseService;
-import com.example.taskbazaar.utility.LogMessage;
-import com.example.taskbazaar.utility.TaskBazaarLogger;
+import com.example.taskbazaar.service.AlertService;
+import com.example.taskbazaar.service.ValidationService;
+import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@WebServlet(name = "AuthenticationServlet", value = {"/login","/logout","/reg"})
+@WebServlet(value = {"/login", "/logout", "/register"})
 public class AuthenticationServlet extends HttpServlet {
 
-    private static final Logger logger = TaskBazaarLogger.getLogger();
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationServlet.class);
     private final AuthenticationService authenticationService = AuthenticationService.getInstance();
-    private final RegisterService registerService = RegisterService.getInstance();
+    private final ValidationService validationService = ValidationService.getInstance();
 
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String username = request.getParameter("username");
+            String password = request.getParameter("password");
+            String path = request.getServletPath();
+            User user;
 
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-
-        User user = new User(username, password);
-        String path = request.getServletPath();
-
-        if("/login".equals(path)) {
-            boolean isValid;
-
-            try{
-                logger.info("authenticating user......");
-                isValid = authenticationService.authenticate(user);
-            } catch (Exception e) {
-                logger.info("error authenticating user......" + e.getMessage());
-                ResponseService.sendAlertAndRedirect(response,LogMessage.tryAgain,"index.jsp");
+            if (!validationService.validateUsername(username)) {
+                AlertService.sendAlertAndRedirect(response, Constants.USERNAME_ERROR, "index.jsp");
                 return;
             }
 
-            if(isValid) {
-                HttpSession session = request.getSession();
-                session.setAttribute("username", username);
-                logger.info("User " + username + " logged in");
-                response.sendRedirect("/home");
-            }
-            else {
-                logger.info("User " + username + " enter wrong credentials");
-                ResponseService.sendAlertAndRedirect(response,"Wrong Credentials!! Try again","index.jsp");
-            }
-        }
-        else if("/reg".equals(path)){
-            String confirmPassword = request.getParameter("confirmPassword");
-            String role = request.getParameter("role");
-            if(!password.equals(confirmPassword)) {
-                logger.info("Passwords do not match for user : " + username);
-                ResponseService.sendAlertAndRedirect(response,"Password do not match. Try again","register.jsp");
-            }
-            try {
-                user = new User(username, password,role);
-                boolean registered = registerService.register(user);
-                System.out.println(registered);
-                if (registered) {
-                    logger.info("User " + username + " registered");
-                    ResponseService.sendAlertAndRedirect(response,"Register Successfully!!","index.jsp");
+            if ("/login".equals(path)) {
+                boolean isVerified;
+                user = new User(username, password);
+                logger.info("authenticating user:: {}", username);
+                isVerified = authenticationService.authenticate(user);
+
+                if (isVerified) {
+                    HttpSession session = request.getSession();
+                    session.setAttribute("username", username);
+                    logger.info("User: {} logged in", username);
+                    response.sendRedirect("/home");
                 } else {
-                    logger.info("User " + username + " is already registered" );
-                    ResponseService.sendAlertAndRedirect(response,"User is already registered. Please Log in","index.jsp");
+                    logger.info("{} enter wrong credentials", username);
+                    AlertService.sendAlertAndRedirect(response, Constants.CREDENTIALS_ERROR, "index.jsp");
                 }
-            } catch (Exception e) {
-                logger.info("error registering user......" + e.getMessage());
-                ResponseService.sendAlertAndRedirect(response,"Some Error occurred in registration form!!! Please try again","register.jsp");
+            } else if ("/register".equals(path)) {
+                String confirmPassword = request.getParameter("confirmPassword");
+                String role = request.getParameter("role");
+
+                if (!validationService.validatePassword(password, confirmPassword)) {
+                    logger.info("Passwords do not match for {}", username);
+                    AlertService.sendAlertAndRedirect(response, (Constants.PASSWORD_NOT_MATCH + Constants.TRY_AGAIN_ERROR), "register.jsp");
+                    return;
+                }
+
+                user = new User(username, password, role);
+                boolean isSuccess = authenticationService.register(user);
+
+                if (isSuccess) {
+                    logger.info("{} registered", username);
+                    AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "index.jsp");
+
+                } else {
+                    logger.info("User {} is already registered", username);
+                    AlertService.sendAlertAndRedirect(response, Constants.ALREADY_REGISTERED, "index.jsp");
+                }
+
+            } else {
+                logger.warn("{} {}", username, Constants.INVALID_PAGE_ERROR);
+                response.sendRedirect(request.getContextPath() + "/pageNotFound.jsp");
+            }
+        } catch (Exception e) {
+            logger.error("error occurred: ", e);
+            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            try {
+                request.getRequestDispatcher("error.jsp").forward(request, response);
+            } catch (Exception ex) {
+                logger.error("Error forwarding to error page: ", ex);
             }
         }
-        else{
-            logger.info("Internal server error...");
-            ResponseService.sendAlertAndRedirect(response,LogMessage.tryAgain,"index.jsp");
-        }
-
     }
 
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String path = request.getServletPath();
+            if ("/logout".equals(path)) {
+                String username = request.getParameter("username");
+                logger.info("{} logged out", username);
+                HttpSession session = request.getSession(false);
+                if (session != null) {
+                    authenticationService.logOut(session);
+                    System.out.println("I am logged out");
+                    AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "index.jsp");
 
-        String path = request.getServletPath();
-
-        if("/logout".equals(path)) {
-            logger.info("User " + request.getSession().getAttribute("username") + " logged out");
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                session.invalidate();
+                }
+            } else {
+                logger.warn("{}", Constants.INVALID_PAGE_ERROR);
+                response.sendRedirect(request.getContextPath() + "pageNotFound.jsp");
             }
-            logger.info("Redirecting to login.......");
-            ResponseService.sendAlertAndRedirect(response,"Log out successfully!!","login.jsp");
+        } catch (Exception e) {
+            logger.error("error occurred: ", e);
+            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            try {
+                request.getRequestDispatcher("error.jsp").forward(request, response);
+            } catch (Exception ex) {
+                logger.error("Error forwarding to error page: ", ex);
+            }
         }
-        else{
-            logger.info("Internal server error...");
-            ResponseService.sendAlertAndRedirect(response,LogMessage.tryAgain,"index.jsp");
-        }
-
     }
-
 }

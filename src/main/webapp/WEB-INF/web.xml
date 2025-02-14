@@ -4,7 +4,6 @@
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
 
-
     <filter>
         <filter-name>NoCacheFilter</filter-name>
         <filter-class>com.example.taskbazaar.filters.NoCacheFilter</filter-class>

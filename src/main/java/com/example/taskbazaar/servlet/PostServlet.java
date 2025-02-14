@@ -3,111 +3,121 @@ package com.example.taskbazaar.servlet;
 import com.example.taskbazaar.model.Post;
 import com.example.taskbazaar.service.BidService;
 import com.example.taskbazaar.service.PostService;
-import com.example.taskbazaar.service.ResponseService;
-import com.example.taskbazaar.utility.TaskBazaarLogger;
+import com.example.taskbazaar.service.AlertService;
+import com.example.taskbazaar.service.UserService;
+import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.RequestDispatcher;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@WebServlet({"/home","/save","/edit","/delete"})
+import java.util.List;
+
+@WebServlet({"/home", "/save", "/edit", "/delete"})
 public class PostServlet extends HttpServlet {
 
-    private final Logger logger = TaskBazaarLogger.getLogger();
+    private final Logger logger = LoggerFactory.getLogger(PostServlet.class);
     private final PostService postService = PostService.getInstance();
     private final BidService bidService = BidService.getInstance();
+    private final UserService userService = UserService.getInstance();
 
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String path = request.getServletPath();
-        if("/home".equals(path)){
-            logger.info("retrieving posts for showing home page.....");
-            List<Post> posts = postService.getAllPosts();
-            request.setAttribute("posts", posts);
-            RequestDispatcher dispatcher = request.getRequestDispatcher("home.jsp");
-            dispatcher.forward(request, response);
+    public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String path = request.getServletPath();
+            if ("/home".equals(path)) {
+                List<Post> posts = postService.getAllPosts();
+                logger.info("total posts:: {}", posts.size());
+                request.setAttribute("posts", posts);
+                RequestDispatcher dispatcher = request.getRequestDispatcher("home.jsp");
+                dispatcher.forward(request, response);
+            }
+        } catch (Exception e) {
+            logger.error("error occurred:: {}", e.getMessage());
+            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            try {
+                request.getRequestDispatcher("error.jsp").forward(request, response);
+            } catch (Exception ex) {
+                logger.error("Error forwarding to error page: ", ex);
+            }
         }
     }
 
 
+    public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String username = request.getSession().getAttribute("username").toString();
+            String userRole = userService.getUserRole(username);
+            String path = request.getServletPath();
+            if ("/save".equals(path)) {
 
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException{
+                String title = request.getParameter("title");
+                String content = request.getParameter("content");
+                if (!"buyer".equals(userRole)) {
+                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                    return;
+                }
 
-        String username = request.getSession().getAttribute("username").toString();
-        String path = request.getServletPath();
-        if("/save".equals(path)) {
+                logger.info("saving post {}", title);
+                boolean success = postService.createPost(username, title, content);
 
-            String title = request.getParameter("title");
-            String content = request.getParameter("content");
+                if (success) {
+                    logger.info("{} post {}", username, title);
+                    response.sendRedirect("/home");
+                } else {
+                    logger.info("{} post {} failed", username, title);
+                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                }
+            } else if ("/delete".equals(path)) {
+                int postId = Integer.parseInt(request.getParameter("postId"));
+                if (!"admin".equals(userRole)) {
+                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                    return;
+                }
 
-            logger.info("saving post...");
-            boolean success = postService.createPost(username, title, content);
-
-            if (success) {
-                logger.info(username + " created post successfully....");
-                response.sendRedirect("/home");
-            } else {
-                logger.info(username + " try to create post but failed....");
-                ResponseService.sendAlertAndRedirect(response,"You are not authorized to access this page!!","/home");
-            }
-        }
-        else if("/delete".equals(path)) {
-            int postId = Integer.parseInt(request.getParameter("postId"));
-
-            try {
                 PostService postService = PostService.getInstance();
-                logger.info("deleting post...");
+                logger.info("deleting post {}", postId);
                 boolean deleted = postService.deletePost(postId);
 
                 if (deleted) {
-                    logger.info(username + " deleted post successfully....");
-                    response.sendRedirect("admin.jsp"); // Refresh page after deletion
+                    logger.info("{} deleted post {}", username, postId);
+                    response.sendRedirect("/admin"); // Refresh page after deletion
                 } else {
-                    logger.info(username + " try to delete post but failed....");
-                    response.getWriter().println("<script>alert('Failed to delete post!'); window.location='admin.jsp';</script>");
+                    logger.info("{} deleted post {} failed", username, postId);
+                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
                 }
-            } catch (Exception e) {
-                logger.info(username + " try to delete post but failed...." + e.getMessage());
-                //throw new ServletException(e);
+            } else if ("/edit".equals(path)) {
+                String postId = request.getParameter("postId");
+                String title = request.getParameter("title");
+                String description = request.getParameter("content");
+                logger.info("{} editing post {}", username, postId);
+                boolean isSuccess;
+                logger.info("checking ownership of {}", username);
+                isSuccess = bidService.isPostOwnedByUser(username, postId);
+                boolean isUpdated;
+                if (isSuccess) {
+                    logger.info("{} updated post successfully", username);
+                    isUpdated = postService.updatePost(Integer.parseInt(postId), title, description);
+                    AlertService.sendAlertAndRedirect(response, isUpdated ? Constants.SUCCESS : Constants.ERROR, "/home");
+                } else {
+                    logger.info("{} is not owner", username);
+                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                }
+
+            } else {
+                logger.info("internal server error");
+                AlertService.sendAlertAndRedirect(response, Constants.INTERNAL_ERROR, "/home");
             }
-        }
-        else if("/edit".equals(path)) {
-            String postId = request.getParameter("postId");
-            String title = request.getParameter("title");
-            String description = request.getParameter("content");
-            logger.info("editing post : " + postId);
-            boolean isSuccess = false;
+        } catch (Exception e) {
+            logger.error("error occurred: {}", e.getMessage());
+            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
             try {
-                isSuccess = bidService.isPostOwnedByUser(username,postId);
-                logger.info("isSuccess : " + isSuccess);
-            } catch (SQLException e) {
-                logger.info("SQL query error "+e.getMessage());
-                //throw new RuntimeException(e);
+                request.getRequestDispatcher("error.jsp").forward(request, response);
+            } catch (Exception ex) {
+                logger.error("Error forwarding to error page: ", ex);
             }
-            logger.info("updating post...");
-            boolean isUpdated = postService.updatePost(Integer.parseInt(postId),title,description);
-
-            if(isSuccess) {
-                logger.info(username + " updated post successfully....");
-                    ResponseService.sendAlertAndRedirect(response, isUpdated ?
-                            "You have successfully edited this post!" : "There is some error to update the post!!","/home");
-                }
-                else{
-                    logger.info(username + " try to update post but failed....");
-                    ResponseService.sendAlertAndRedirect(response,"You are not authorized to edit this post!!","/home");
-                }
-
         }
-        else{
-            logger.info("internal server error");
-            ResponseService.sendAlertAndRedirect(response,"Internal Server Error","/home");
-        }
-
     }
-
 }

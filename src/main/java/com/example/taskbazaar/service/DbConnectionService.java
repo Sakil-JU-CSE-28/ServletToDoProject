@@ -1,13 +1,13 @@
 package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.dao.UserDao;
-import com.example.taskbazaar.utility.TaskBazaarLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.util.logging.Logger;
 
 public class DbConnectionService {
-    private static Logger logger = TaskBazaarLogger.getLogger();
+    private static Logger logger = LoggerFactory.getLogger(DbConnectionService.class);
     public static Connection getConnection() throws Exception {
         logger.info("Connecting to database...");
         UserDao userDao = UserDao.getInstance();

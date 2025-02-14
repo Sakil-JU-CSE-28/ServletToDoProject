@@ -1,31 +1,32 @@
 package com.example.taskbazaar.service;
 
-import com.example.taskbazaar.query.Queries;
-import com.example.taskbazaar.utility.TaskBazaarLogger;
+import com.example.taskbazaar.utility.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class WorkService {
 
-    private static WorkService workService = null;
-    private static Logger logger = TaskBazaarLogger.getLogger();
-
+    private static Logger logger = LoggerFactory.getLogger(WorkService.class);
     private WorkService() {
         logger.info("WorkService created");
     }
+    private static class Holder {
+        private static final WorkService INSTANCE = new WorkService();
+    }
     public static WorkService getInstance() {
-        return workService==null?workService=new WorkService():workService;
+        return Holder.INSTANCE;
     }
 
     public List<String> getAllWork(String username) {
 
         try(Connection connection = DbConnectionService.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(Queries.ORDER_BY_WORKER_USERNAME)) {
+            PreparedStatement preparedStatement = connection.prepareStatement(Constants.ORDER_BY_WORKER_USERNAME)) {
             preparedStatement.setString(1, username);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<String> works = new ArrayList<>();
@@ -39,5 +40,4 @@ public class WorkService {
             throw new RuntimeException(e);
         }
     }
-
 }

@@ -1,11 +1,11 @@
 package com.example.taskbazaar.dao;
 
-import java.sql.*;
-import java.util.logging.Logger;
-
 import com.example.taskbazaar.utility.ConfigLoader;
-import com.example.taskbazaar.utility.TaskBazaarLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 public class UserDao {
 
@@ -20,31 +20,30 @@ public class UserDao {
      * 7. close
      */
 
-    private static Logger logger = TaskBazaarLogger.getLogger();
+    private static final Logger logger = LoggerFactory.getLogger(UserDao.class);
 
 
-    private String url = ConfigLoader.getProperty("db.url");
-    private String user = ConfigLoader.getProperty("db.user");
-    private String password = ConfigLoader.getProperty("db.password");
-    private String driver = ConfigLoader.getProperty("db.driver");
+    private final String URL = ConfigLoader.getProperty("db.url");
+    private final String USER = ConfigLoader.getProperty("db.user");
+    private final String PASSWORD = ConfigLoader.getProperty("db.password");
+    private static final String DRIVER = ConfigLoader.getProperty("db.driver");
     private static UserDao singleObject = null;
 
     private UserDao() throws Exception {
-        Class.forName(driver);
-        logger.info("Driver Registered: " + driver);
+        Class.forName(DRIVER);
+        logger.info("Driver Registered:: {}", DRIVER);
     }
 
     public static UserDao getInstance() throws Exception {
         if (singleObject == null) {
             singleObject = new UserDao();
         }
-        logger.info("Connected to database driver");
+        logger.info("create instance of {}",DRIVER);
         return singleObject;
     }
 
     public Connection connect() throws Exception {
-        logger.info("connecting successfully");
-        return DriverManager.getConnection(url, user, password);
+        logger.info("connected to {}",DRIVER);
+        return DriverManager.getConnection(URL, USER, PASSWORD);
     }
-
 }

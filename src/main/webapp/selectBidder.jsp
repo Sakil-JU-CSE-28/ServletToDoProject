@@ -14,6 +14,7 @@
 <body>
 <h2>Select a Bidder</h2>
 <form action="addBidder" method="post">
+  <input type="hidden" name="postId" value="<%= request.getParameter("postId") %>">
   <select name="selectedBidder">
     <%
       List<String> bidders = (List<String>) request.getAttribute("bidders");

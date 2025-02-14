@@ -16,7 +16,7 @@
 <br/>
 
 <!-- Registration Form -->
-<form action="reg" method="POST">
+<form action="register" method="POST">
   <label for="username">Username:</label>
   <input type="text" id="username" name="username" required>
   <br/><br/>

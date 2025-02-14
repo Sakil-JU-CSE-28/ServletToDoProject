@@ -1,7 +1,20 @@
-package com.example.taskbazaar.query;
+package com.example.taskbazaar.utility;
 
-public class Queries {
+public class Constants {
+    /// error messages for log
+    public static final String INVALID_PAGE_ERROR = "try to access invalid page";
+    public static final String ERROR = "ERROR";
+    public static final String INTERNAL_ERROR = "Internal error";
+    public static final String SUCCESS = "success";
+    public static final String CREDENTIALS_ERROR = "Wrong Credentials!! Try again";
+    public static final String TRY_AGAIN_ERROR = "Please try again!!";
+    public static final String PASSWORD_NOT_MATCH = "Password does not match.";
+    public static final String USERNAME_ERROR = "Invalid username!";
+    public static final String ALREADY_REGISTERED = "Already registered!";
+    public static final String UNAUTHORIZED = "Unauthorized!";
+    public static final String NOT_VALID = "Invalid";
 
+    /// sql queries
     public static final String SELECT_PASSWORD_BY_USERNAME = "SELECT password, salt FROM users WHERE username = ?";
     public static final String INSERT_USER = "INSERT INTO users (username, password, role, salt) VALUES (?, ?, ?, ?)";
     public static final String USER_ROLE_BY_USERNAME = "SELECT role FROM users WHERE username = ?";
@@ -19,5 +32,4 @@ public class Queries {
     public static final String DELETE_POST_BY_ID = "DELETE FROM posts WHERE id = ?";
     public static final String UPDATE_POST_BY_ID = "UPDATE posts SET title = ?, description = ? WHERE id = ?";
     public static final String FIND_USER_BY_USERNAME = "SELECT COUNT(*) FROM users WHERE username = ?";
-
 }

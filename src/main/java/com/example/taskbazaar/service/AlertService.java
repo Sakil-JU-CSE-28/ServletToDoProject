@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-public class ResponseService {
+public class AlertService {
     public static void sendAlertAndRedirect(HttpServletResponse response, String message, String redirectUrl) throws IOException {
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
