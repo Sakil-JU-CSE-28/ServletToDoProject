@@ -13,6 +13,9 @@ public class Constants {
     public static final String ALREADY_REGISTERED = "Already registered!";
     public static final String UNAUTHORIZED = "Unauthorized!";
     public static final String NOT_VALID = "Invalid";
+    public static final String PASSWORD_ERROR = "Password not follow the protocol";
+    public static final String VALIDATION_ERROR = "Error validating username/password";
+
 
     /// sql queries
     public static final String SELECT_PASSWORD_BY_USERNAME = "SELECT password, salt FROM users WHERE username = ?";
@@ -32,4 +35,5 @@ public class Constants {
     public static final String DELETE_POST_BY_ID = "DELETE FROM posts WHERE id = ?";
     public static final String UPDATE_POST_BY_ID = "UPDATE posts SET title = ?, description = ? WHERE id = ?";
     public static final String FIND_USER_BY_USERNAME = "SELECT COUNT(*) FROM users WHERE username = ?";
+
 }

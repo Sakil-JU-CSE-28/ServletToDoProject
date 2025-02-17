@@ -3,7 +3,7 @@ package com.example.taskbazaar.servlet;
 import com.example.taskbazaar.service.AlertService;
 import com.example.taskbazaar.service.PostService;
 import com.example.taskbazaar.service.UserService;
-import com.example.taskbazaar.service.ValidationService;
+import com.example.taskbazaar.validation.Validator;
 import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,20 +16,20 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 @WebServlet("/admin")
-public class adminServlet extends HttpServlet {
+public class AdminServlet extends HttpServlet {
 
-    private final Logger logger = LoggerFactory.getLogger(adminServlet.class);
+    private final Logger logger = LoggerFactory.getLogger(AdminServlet.class);
     private static final PostService postService = PostService.getInstance();
     private final UserService userService = UserService.getInstance();
-    private final ValidationService validationService = ValidationService.getInstance();
+    private final Validator validator = Validator.getInstance();
 
     public void doGet(HttpServletRequest req, HttpServletResponse res) {
 
         try {
             String username = (String) req.getSession().getAttribute("username");
             logger.info("{} try to access admin page", username);
-
-            if (!validationService.validateUsername(username)) {
+            boolean isSuccess = validator.validateUsername(username);
+            if (!isSuccess) {
                 AlertService.sendAlertAndRedirect(res, Constants.ERROR, "index.jsp");
                 return;
             }
@@ -49,11 +49,11 @@ public class adminServlet extends HttpServlet {
             }
         } catch (Exception e) {
             logger.error("error occurred: {}", e.getMessage());
-            req.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            req.setAttribute("errorMessage", e.getMessage());
             try {
                 req.getRequestDispatcher("error.jsp").forward(req, res);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: ", ex);
+                logger.error("Error forwarding to error page: {}", ex.getMessage());
             }
         }
     }

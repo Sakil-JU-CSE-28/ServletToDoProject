@@ -1,21 +1,24 @@
 package com.example.taskbazaar.servlet;
 
+import com.example.taskbazaar.exception.ValidationException;
 import com.example.taskbazaar.model.User;
 import com.example.taskbazaar.service.AuthenticationService;
 import com.example.taskbazaar.service.AlertService;
-import com.example.taskbazaar.service.ValidationService;
+import com.example.taskbazaar.validation.Validator;
 import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 @WebServlet(value = {"/login", "/logout", "/register"})
 public class AuthenticationServlet extends HttpServlet {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationServlet.class);
     private final AuthenticationService authenticationService = AuthenticationService.getInstance();
-    private final ValidationService validationService = ValidationService.getInstance();
+    private final Validator validator = Validator.getInstance();
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
         try {
@@ -23,19 +26,22 @@ public class AuthenticationServlet extends HttpServlet {
             String password = request.getParameter("password");
             String path = request.getServletPath();
             User user;
-
-            if (!validationService.validateUsername(username)) {
+            boolean isSuccess = validator.validateUsername(username);
+            if (!isSuccess) {
                 AlertService.sendAlertAndRedirect(response, Constants.USERNAME_ERROR, "index.jsp");
+                return;
+            }
+            isSuccess = validator.validatePassword(password);
+            if (!isSuccess) {
+                AlertService.sendAlertAndRedirect(response, Constants.PASSWORD_ERROR, "index.jsp");
                 return;
             }
 
             if ("/login".equals(path)) {
-                boolean isVerified;
                 user = new User(username, password);
                 logger.info("authenticating user:: {}", username);
-                isVerified = authenticationService.authenticate(user);
-
-                if (isVerified) {
+                isSuccess = authenticationService.authenticate(user);
+                if (isSuccess) {
                     HttpSession session = request.getSession();
                     session.setAttribute("username", username);
                     logger.info("User: {} logged in", username);
@@ -47,15 +53,9 @@ public class AuthenticationServlet extends HttpServlet {
             } else if ("/register".equals(path)) {
                 String confirmPassword = request.getParameter("confirmPassword");
                 String role = request.getParameter("role");
-
-                if (!validationService.validatePassword(password, confirmPassword)) {
-                    logger.info("Passwords do not match for {}", username);
-                    AlertService.sendAlertAndRedirect(response, (Constants.PASSWORD_NOT_MATCH + Constants.TRY_AGAIN_ERROR), "register.jsp");
-                    return;
-                }
-
+                isSuccess = validator.validatePasswordConfirmation(password, confirmPassword);
                 user = new User(username, password, role);
-                boolean isSuccess = authenticationService.register(user);
+                isSuccess = authenticationService.register(user);
 
                 if (isSuccess) {
                     logger.info("{} registered", username);
@@ -71,12 +71,19 @@ public class AuthenticationServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/pageNotFound.jsp");
             }
         } catch (Exception e) {
-            logger.error("error occurred: ", e);
-            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            logger.error("error: {}", e.getMessage());
+            request.setAttribute("errorMessage", e.getMessage());
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
                 logger.error("Error forwarding to error page: ", ex);
+            }
+        } catch (ValidationException e) {
+            logger.error("validation error: {}", e.getMessage());
+            try {
+                AlertService.sendAlertAndRedirect(response, Constants.VALIDATION_ERROR, request.getHeader("Referer"));
+            } catch (IOException ex) {
+                logger.error("Error forwarding to error page: {}", ex.getMessage());
             }
         }
     }
@@ -88,23 +95,20 @@ public class AuthenticationServlet extends HttpServlet {
                 String username = request.getParameter("username");
                 logger.info("{} logged out", username);
                 HttpSession session = request.getSession(false);
-                if (session != null) {
-                    authenticationService.logOut(session);
-                    System.out.println("I am logged out");
-                    AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "index.jsp");
+                authenticationService.logOut(session);
+                AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "index.jsp");
 
-                }
             } else {
                 logger.warn("{}", Constants.INVALID_PAGE_ERROR);
                 response.sendRedirect(request.getContextPath() + "pageNotFound.jsp");
             }
         } catch (Exception e) {
-            logger.error("error occurred: ", e);
-            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            logger.error("error occurred: {}", e.getMessage());
+            request.setAttribute("errorMessage", e.getMessage());
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: ", ex);
+                logger.error("Error forwarding to error page: {}", ex.getMessage());
             }
         }
     }

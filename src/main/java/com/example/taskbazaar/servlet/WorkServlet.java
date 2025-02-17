@@ -12,10 +12,10 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 @WebServlet("/works")
-public class workServlet extends HttpServlet {
+public class WorkServlet extends HttpServlet {
 
     private final WorkService workService = WorkService.getInstance();
-    private final static Logger logger = LoggerFactory.getLogger(workServlet.class);
+    private final static Logger logger = LoggerFactory.getLogger(WorkServlet.class);
 
     public void doGet(HttpServletRequest req, HttpServletResponse res) {
         try {

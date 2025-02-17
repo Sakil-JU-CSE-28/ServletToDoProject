@@ -36,11 +36,11 @@ public class PostServlet extends HttpServlet {
             }
         } catch (Exception e) {
             logger.error("error occurred:: {}", e.getMessage());
-            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            request.setAttribute("errorMessage", e.getMessage());
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: ", ex);
+                logger.error("Error forwarding to error page: {}", ex.getMessage());
             }
         }
     }
@@ -61,9 +61,9 @@ public class PostServlet extends HttpServlet {
                 }
 
                 logger.info("saving post {}", title);
-                boolean success = postService.createPost(username, title, content);
+                boolean isSuccess = postService.createPost(username, title, content);
 
-                if (success) {
+                if (isSuccess) {
                     logger.info("{} post {}", username, title);
                     response.sendRedirect("/home");
                 } else {
@@ -79,9 +79,8 @@ public class PostServlet extends HttpServlet {
 
                 PostService postService = PostService.getInstance();
                 logger.info("deleting post {}", postId);
-                boolean deleted = postService.deletePost(postId);
-
-                if (deleted) {
+                boolean isDeleted = postService.deletePost(postId);
+                if (isDeleted) {
                     logger.info("{} deleted post {}", username, postId);
                     response.sendRedirect("/admin"); // Refresh page after deletion
                 } else {
@@ -107,16 +106,16 @@ public class PostServlet extends HttpServlet {
                 }
 
             } else {
-                logger.info("internal server error");
-                AlertService.sendAlertAndRedirect(response, Constants.INTERNAL_ERROR, "/home");
+                logger.info("page not found");
+                response.sendRedirect("pageNotFound.jsp");
             }
         } catch (Exception e) {
             logger.error("error occurred: {}", e.getMessage());
-            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            request.setAttribute("errorMessage", e.getMessage());
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: ", ex);
+                logger.error("Error forwarding to error page: {}", ex.getMessage());
             }
         }
     }

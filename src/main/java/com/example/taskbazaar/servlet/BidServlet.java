@@ -3,7 +3,7 @@ package com.example.taskbazaar.servlet;
 import com.example.taskbazaar.service.BidService;
 import com.example.taskbazaar.service.AlertService;
 import com.example.taskbazaar.service.UserService;
-import com.example.taskbazaar.service.ValidationService;
+import com.example.taskbazaar.validation.Validator;
 import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,7 +22,7 @@ public class BidServlet extends HttpServlet {
     private final BidService bidService = BidService.getInstance();
     private final UserService userService = UserService.getInstance();
     private final Logger logger = LoggerFactory.getLogger(BidServlet.class);
-    private final ValidationService validationService = ValidationService.getInstance();
+    private final Validator validator = Validator.getInstance();
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) {
 
@@ -32,8 +32,8 @@ public class BidServlet extends HttpServlet {
 
             HttpSession session = request.getSession(false);
             String username = (session != null) ? (String) session.getAttribute("username") : null;
-
-            if (!validationService.validateUsername(username)) {
+            boolean isSuccess = validator.validateUsername(username);
+            if (!isSuccess) {
                 logger.info("username is not valid:: {}", username);
                 AlertService.sendAlertAndRedirect(response, Constants.NOT_VALID, "index.jsp");
                 return;
@@ -65,8 +65,8 @@ public class BidServlet extends HttpServlet {
                     return;
                 }
                 logger.info("checking owner of bid {}", postId);
-                boolean isAuthorized = bidService.isPostOwnedByUser(username, postId);
-                if (!isAuthorized) {
+                isSuccess = bidService.isPostOwnedByUser(username, postId);
+                if (!isSuccess) {
                     logger.info("{} try to access bid of other user", username);
                     AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
                     return;
@@ -98,7 +98,7 @@ public class BidServlet extends HttpServlet {
                 if (postId != null) {
                     logger.info("{} Bidder added for post {}", selectedBidder, postId);
                     bidService.addBidderToAccepted(postId, username, selectedBidder);
-                    AlertService.sendAlertAndRedirect(response, "Selected bidder added successfully!!", "/home");
+                    AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "/home");
                 } else {
                     logger.info("bidder add failed for post {}", postId);
                     AlertService.sendAlertAndRedirect(response, Constants.ERROR, "/home");
@@ -108,12 +108,12 @@ public class BidServlet extends HttpServlet {
                 AlertService.sendAlertAndRedirect(response, Constants.ERROR, "pageNotFound.jsp");
             }
         } catch (Exception e) {
-            logger.error("error occurred: ", e);
-            request.setAttribute("errorMessage", "An unexpected error occurred. Please try again.");
+            logger.error("error occurred: {}", e.getMessage());
+            request.setAttribute("errorMessage", e.getMessage());
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: ", ex);
+                logger.error("Error forwarding to error page: {}", ex.getMessage());
             }
         }
     }
