@@ -1,2 +1,1 @@
-
-![TaskBazaarER](https://github.com/user-attachments/assets/a0957c19-d98f-48a9-88da-f0eef905d140)
+![TaskBazaar ER diagram](https://github.com/user-attachments/assets/59f9aed4-b90d-4fc1-96bf-836bb5bc72b9)
