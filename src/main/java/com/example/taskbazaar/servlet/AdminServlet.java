@@ -21,7 +21,6 @@ public class AdminServlet extends HttpServlet {
     private final Logger logger = LoggerFactory.getLogger(AdminServlet.class);
     private static final PostService postService = PostService.getInstance();
     private final UserService userService = UserService.getInstance();
-    private final Validator validator = Validator.getInstance();
 
     public void doGet(HttpServletRequest req, HttpServletResponse res) {
 

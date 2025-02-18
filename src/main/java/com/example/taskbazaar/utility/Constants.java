@@ -13,7 +13,7 @@ public class Constants {
     public static final String ALREADY_REGISTERED = "Already registered!";
     public static final String UNAUTHORIZED = "Unauthorized!";
     public static final String NOT_VALID = "Invalid";
-    public static final String PASSWORD_ERROR = "Password not follow the protocol";
-    public static final String VALIDATION_ERROR = "Error validating username/password";
+    public static final String ALREADY_ADDED = "Already added!";
+    public static final String VALIDATION_ERROR = "username/password is not valid";
     public static final String FORWARD_ERROR = "Error forwarding request: {}";
 }

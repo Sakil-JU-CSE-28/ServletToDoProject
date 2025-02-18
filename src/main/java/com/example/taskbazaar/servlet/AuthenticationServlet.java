@@ -27,13 +27,14 @@ public class AuthenticationServlet extends HttpServlet {
             String password = request.getParameter("password");
             String path = request.getServletPath();
             User user = new User(username, password);
+            logger.info("User : {}", user);
             boolean isSuccess;
             if ("/login".equals(path)) {
 
                 isSuccess = validator.validateLogin(user);
 
                 if(!isSuccess) {
-                    AlertService.sendAlertAndRedirect(response,Constants.ERROR, "index.jsp");
+                    AlertService.sendAlertAndRedirect(response,Constants.VALIDATION_ERROR, "index.jsp");
                     return;
                 }
 
@@ -55,7 +56,7 @@ public class AuthenticationServlet extends HttpServlet {
 
                 isSuccess = validator.validateRegistration(user,confirmPassword);
                 if(!isSuccess) {
-                    AlertService.sendAlertAndRedirect(response,Constants.ERROR, "register.jsp");
+                    AlertService.sendAlertAndRedirect(response,Constants.VALIDATION_ERROR, "register.jsp");
                     return;
                 }
 

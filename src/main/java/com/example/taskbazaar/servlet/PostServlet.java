@@ -51,63 +51,68 @@ public class PostServlet extends HttpServlet {
             String username = request.getSession().getAttribute("username").toString();
             String userRole = userService.getUserRole(username);
             String path = request.getServletPath();
-            if ("/save".equals(path)) {
+            switch (path) {
+                case "/save" -> {
 
-                String title = request.getParameter("title");
-                String content = request.getParameter("content");
-                if (!"buyer".equals(userRole)) {
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
-                    return;
-                }
+                    String title = request.getParameter("title");
+                    String content = request.getParameter("content");
+                    if (!"buyer".equals(userRole)) {
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        return;
+                    }
 
-                logger.info("saving post {}", title);
-                boolean isSuccess = postService.createPost(username, title, content);
+                    logger.info("saving post {}", title);
+                    boolean isSuccess = postService.createPost(username, title, content);
 
-                if (isSuccess) {
-                    logger.info("{} post {}", username, title);
-                    response.sendRedirect("/home");
-                } else {
-                    logger.info("{} post {} failed", username, title);
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                    if (isSuccess) {
+                        logger.info("{} post {}", username, title);
+                        response.sendRedirect("/home");
+                    } else {
+                        logger.info("{} post {} failed", username, title);
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                    }
                 }
-            } else if ("/delete".equals(path)) {
-                int postId = Integer.parseInt(request.getParameter("postId"));
-                if (!"admin".equals(userRole)) {
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
-                    return;
-                }
+                case "/delete" -> {
+                    int postId = Integer.parseInt(request.getParameter("postId"));
+                    if (!"admin".equals(userRole)) {
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        return;
+                    }
 
-                PostService postService = PostService.getInstance();
-                logger.info("deleting post {}", postId);
-                boolean isDeleted = postService.deletePost(postId);
-                if (isDeleted) {
-                    logger.info("{} deleted post {}", username, postId);
-                    response.sendRedirect("/admin"); // Refresh page after deletion
-                } else {
-                    logger.info("{} deleted post {} failed", username, postId);
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                    PostService postService = PostService.getInstance();
+                    logger.info("deleting post {}", postId);
+                    boolean isDeleted = postService.deletePost(postId);
+                    if (isDeleted) {
+                        logger.info("{} deleted post {}", username, postId);
+                        response.sendRedirect("/admin"); // Refresh page after deletion
+                    } else {
+                        logger.info("{} deleted post {} failed", username, postId);
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                    }
                 }
-            } else if ("/edit".equals(path)) {
-                String postId = request.getParameter("postId");
-                String title = request.getParameter("title");
-                String description = request.getParameter("content");
-                logger.info("{} editing post {}", username, postId);
-                boolean isSuccess;
-                logger.info("checking ownership of {}", username);
-                isSuccess = bidService.isPostOwnedByUser(username, postId);
-                boolean isUpdated;
-                if (isSuccess) {
-                    logger.info("{} updated post successfully", username);
-                    isUpdated = postService.updatePost(Integer.parseInt(postId), title, description);
-                    AlertService.sendAlertAndRedirect(response, isUpdated ? Constants.SUCCESS : Constants.ERROR, "/home");
-                } else {
-                    logger.info("{} is not owner", username);
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
-                }
+                case "/edit" -> {
+                    String postId = request.getParameter("postId");
+                    String title = request.getParameter("title");
+                    String description = request.getParameter("content");
+                    logger.info("{} editing post {}", username, postId);
+                    boolean isSuccess;
+                    logger.info("checking ownership of {}", username);
+                    isSuccess = bidService.isPostOwnedByUser(username, postId);
+                    boolean isUpdated;
+                    if (isSuccess) {
+                        logger.info("{} updated post successfully", username);
+                        isUpdated = postService.updatePost(Integer.parseInt(postId), title, description);
+                        AlertService.sendAlertAndRedirect(response, isUpdated ? Constants.SUCCESS : Constants.ERROR, "/home");
+                    } else {
+                        logger.info("{} is not owner", username);
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                    }
 
-            } else {
-                logger.info("page not found");
-                response.sendRedirect("pageNotFound.jsp");
+                }
+                case null, default -> {
+                    logger.info("page not found");
+                    response.sendRedirect("pageNotFound.jsp");
+                }
             }
         } catch (Exception e) {
             logger.error("error occurred: {}", e.getMessage());

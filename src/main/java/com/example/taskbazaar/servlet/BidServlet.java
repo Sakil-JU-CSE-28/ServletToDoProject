@@ -28,7 +28,6 @@ public class BidServlet extends HttpServlet {
         try {
             String postId = request.getParameter("postId");
             logger.info("working with postId: {}", postId);
-
             HttpSession session = request.getSession(false);
             String username = (session != null) ? (String) session.getAttribute("username") : null;
             String path = request.getServletPath();
@@ -36,68 +35,72 @@ public class BidServlet extends HttpServlet {
             int bidNumber = bidService.existBid(username);
             logger.info("{} is {} has {} bid", username, role, bidNumber);
             boolean isSuccess;
-            if ("/bid".equals(path)) {
-                if ("freelancer".equals(role)) {
-                    if (bidNumber > 0) {
-                        logger.info("{} try to add past bid", username);
-                        AlertService.sendAlertAndRedirect(response, Constants.ERROR, "/home");
+            switch (path) {
+                case "/bid" -> {
+                    if ("freelancer".equals(role)) {
+                        if (bidNumber > 0) {
+                            logger.info("{} try to add past bid", username);
+                            AlertService.sendAlertAndRedirect(response, Constants.ALREADY_ADDED, "/home");
+                            return;
+                        }
+                        bidService.placeBid(postId, username);
+                        logger.info("{} bid added for {}", username, postId);
+                        AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "/home");
+                    } else {
+                        logger.info("{} try to add new bid {}", username, postId);
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                    }
+                }
+                case "/accept" -> {
+                    if (!"buyer".equals(role)) {
+                        logger.info("{} try to accept bid {}", username, postId);
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
                         return;
                     }
-                    bidService.placeBid(postId, username);
-                    logger.info("{} bid added for {}", username, postId);
-                    AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "/home");
-                } else {
-                    logger.info("{} try to add new bid {}", username, postId);
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
-                }
-            } else if ("/accept".equals(path)) {
-                if (!"buyer".equals(role)) {
-                    logger.info("{} try to accept bid {}", username, postId);
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
-                    return;
-                }
-                logger.info("checking owner of bid {}", postId);
-                isSuccess = bidService.isPostOwnedByUser(username, postId);
-                if (!isSuccess) {
-                    logger.info("{} try to access bid of other user", username);
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
-                    return;
-                }
-                logger.info("checking if {} not accepted this post : {}", username, postId);
-                int previousBidNumber = bidService.existInAccepted(postId);
-                if (previousBidNumber > 0) {
-                    logger.info("{} already accepted", username);
-                    AlertService.sendAlertAndRedirect(response, Constants.ERROR, "/home");
-                    return;
-                }
+                    logger.info("checking owner of bid {}", postId);
+                    isSuccess = bidService.isPostOwnedByUser(username, postId);
+                    if (!isSuccess) {
+                        logger.info("{} try to access bid of other user", username);
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        return;
+                    }
+                    logger.info("checking if {} not accepted this post : {}", username, postId);
+                    int previousBidNumber = bidService.existInAccepted(postId);
+                    if (previousBidNumber > 0) {
+                        logger.info("{} already accepted", username);
+                        AlertService.sendAlertAndRedirect(response, Constants.ALREADY_ADDED, "/home");
+                        return;
+                    }
 
-                List<String> bidders = bidService.getBiddersForPost(postId);
-                logger.info("{} of {}", bidders, username);
-                request.setAttribute("bidders", bidders);
-                request.setAttribute("postId", postId);
-                RequestDispatcher dispatcher = request.getRequestDispatcher("selectBidder.jsp");
-                dispatcher.forward(request, response);
-
-            } else if ("/addBidder".equals(path)) {
-
-                if (!"buyer".equals(role)) {
-                    logger.info("{} not valid for adding", username);
-                    AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
-                    return;
+                    List<String> bidders = bidService.getBiddersForPost(postId);
+                    logger.info("{} of {}", bidders, username);
+                    request.setAttribute("bidders", bidders);
+                    request.setAttribute("postId", postId);
+                    RequestDispatcher dispatcher = request.getRequestDispatcher("selectBidder.jsp");
+                    dispatcher.forward(request, response);
                 }
-                postId = request.getParameter("postId");
-                String selectedBidder = request.getParameter("selectedBidder");
-                if (postId != null) {
-                    logger.info("{} Bidder added for post {}", selectedBidder, postId);
-                    bidService.addBidderToAccepted(postId, username, selectedBidder);
-                    AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "/home");
-                } else {
-                    logger.info("bidder add failed for post {}", postId);
-                    AlertService.sendAlertAndRedirect(response, Constants.ERROR, "/home");
+                case "/addBidder" -> {
+
+                    if (!"buyer".equals(role)) {
+                        logger.info("{} not valid for adding", username);
+                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        return;
+                    }
+                    postId = request.getParameter("postId");
+                    String selectedBidder = request.getParameter("selectedBidder");
+                    if (postId != null) {
+                        logger.info("{} Bidder added for post {}", selectedBidder, postId);
+                        bidService.addBidderToAccepted(postId, username, selectedBidder);
+                        AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "/home");
+                    } else {
+                        logger.info("bidder add failed for post {}", postId);
+                        AlertService.sendAlertAndRedirect(response, Constants.ERROR, "/home");
+                    }
                 }
-            } else {
-                logger.info("{} Page not found", username);
-                AlertService.sendAlertAndRedirect(response, Constants.ERROR, "pageNotFound.jsp");
+                case null, default -> {
+                    logger.info("{} Page not found", username);
+                    AlertService.sendAlertAndRedirect(response, Constants.ERROR, "pageNotFound.jsp");
+                }
             }
         } catch (Exception e) {
             logger.error("error occurred: {}", e.getMessage());
