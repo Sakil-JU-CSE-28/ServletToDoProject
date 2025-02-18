@@ -28,15 +28,8 @@ public class AdminServlet extends HttpServlet {
         try {
             String username = (String) req.getSession().getAttribute("username");
             logger.info("{} try to access admin page", username);
-            boolean isSuccess = validator.validateUsername(username);
-            if (!isSuccess) {
-                AlertService.sendAlertAndRedirect(res, Constants.ERROR, "index.jsp");
-                return;
-            }
-
             String userRole = userService.getUserRole(username);
             logger.info("{} is log as {}", username, userRole);
-
             if ("admin".equals(userRole)) {
                 List<Post> posts = postService.getAllPosts();
                 logger.info("Total {} posts", posts.size());

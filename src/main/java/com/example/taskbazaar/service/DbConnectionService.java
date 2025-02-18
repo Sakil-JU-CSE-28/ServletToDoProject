@@ -1,6 +1,6 @@
 package com.example.taskbazaar.service;
 
-import com.example.taskbazaar.dao.UserDao;
+import com.example.taskbazaar.config.DbConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +10,7 @@ public class DbConnectionService {
     private static Logger logger = LoggerFactory.getLogger(DbConnectionService.class);
     public static Connection getConnection() throws Exception {
         logger.info("Connecting to database...");
-        UserDao userDao = UserDao.getInstance();
+        DbConfig userDao = DbConfig.getInstance();
         return userDao.connect();
     }
 }

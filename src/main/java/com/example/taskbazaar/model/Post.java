@@ -27,4 +27,7 @@ public class Post {
     public String getDescription() {
         return description;
     }
+    public String toString(){
+        return "Post{" + "id=" + id + ", title=" + title + ", description=" + description + '}';
+    }
 }

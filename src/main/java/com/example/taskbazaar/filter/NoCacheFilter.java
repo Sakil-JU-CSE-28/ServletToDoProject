@@ -1,4 +1,4 @@
-package com.example.taskbazaar.filters;
+package com.example.taskbazaar.filter;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletResponse;

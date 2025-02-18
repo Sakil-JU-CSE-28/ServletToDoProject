@@ -1,6 +1,7 @@
 package com.example.taskbazaar.servlet;
 
-import com.example.taskbazaar.service.WorkService;
+import com.example.taskbazaar.service.AcceptedBidService;
+import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -14,14 +15,14 @@ import java.util.List;
 @WebServlet("/works")
 public class WorkServlet extends HttpServlet {
 
-    private final WorkService workService = WorkService.getInstance();
+    private final AcceptedBidService workService = AcceptedBidService.getInstance();
     private final static Logger logger = LoggerFactory.getLogger(WorkServlet.class);
 
     public void doGet(HttpServletRequest req, HttpServletResponse res) {
         try {
             HttpSession session = req.getSession();
             String username = (String) session.getAttribute("username");
-            List<String> works = workService.getAllWork(username);
+            List<String> works = workService.getAllAcceptedBid(username);
             logger.info("{} has {} works", username, works.size());
             req.setAttribute("works", works);
             RequestDispatcher dispatcher = req.getRequestDispatcher("workHistory.jsp");
@@ -32,7 +33,7 @@ public class WorkServlet extends HttpServlet {
             try {
                 req.getRequestDispatcher("error.jsp").forward(req, res);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: ", ex);
+                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
             }
         }
     }

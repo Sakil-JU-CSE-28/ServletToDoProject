@@ -3,7 +3,6 @@ package com.example.taskbazaar.servlet;
 import com.example.taskbazaar.service.BidService;
 import com.example.taskbazaar.service.AlertService;
 import com.example.taskbazaar.service.UserService;
-import com.example.taskbazaar.validation.Validator;
 import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,7 +21,7 @@ public class BidServlet extends HttpServlet {
     private final BidService bidService = BidService.getInstance();
     private final UserService userService = UserService.getInstance();
     private final Logger logger = LoggerFactory.getLogger(BidServlet.class);
-    private final Validator validator = Validator.getInstance();
+
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) {
 
@@ -32,18 +31,11 @@ public class BidServlet extends HttpServlet {
 
             HttpSession session = request.getSession(false);
             String username = (session != null) ? (String) session.getAttribute("username") : null;
-            boolean isSuccess = validator.validateUsername(username);
-            if (!isSuccess) {
-                logger.info("username is not valid:: {}", username);
-                AlertService.sendAlertAndRedirect(response, Constants.NOT_VALID, "index.jsp");
-                return;
-            }
-
             String path = request.getServletPath();
             String role = userService.getUserRole(username);
             int bidNumber = bidService.existBid(username);
             logger.info("{} is {} has {} bid", username, role, bidNumber);
-
+            boolean isSuccess;
             if ("/bid".equals(path)) {
                 if ("freelancer".equals(role)) {
                     if (bidNumber > 0) {
@@ -113,7 +105,7 @@ public class BidServlet extends HttpServlet {
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: {}", ex.getMessage());
+                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
             }
         }
     }

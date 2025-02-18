@@ -40,7 +40,7 @@ public class PostServlet extends HttpServlet {
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: {}", ex.getMessage());
+                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
             }
         }
     }
@@ -115,7 +115,7 @@ public class PostServlet extends HttpServlet {
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: {}", ex.getMessage());
+                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
             }
         }
     }

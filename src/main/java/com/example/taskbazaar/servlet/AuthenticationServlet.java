@@ -1,5 +1,6 @@
 package com.example.taskbazaar.servlet;
 
+import com.example.taskbazaar.exception.AuthenticationException;
 import com.example.taskbazaar.exception.ValidationException;
 import com.example.taskbazaar.model.User;
 import com.example.taskbazaar.service.AuthenticationService;
@@ -25,20 +26,17 @@ public class AuthenticationServlet extends HttpServlet {
             String username = request.getParameter("username");
             String password = request.getParameter("password");
             String path = request.getServletPath();
-            User user;
-            boolean isSuccess = validator.validateUsername(username);
-            if (!isSuccess) {
-                AlertService.sendAlertAndRedirect(response, Constants.USERNAME_ERROR, "index.jsp");
-                return;
-            }
-            isSuccess = validator.validatePassword(password);
-            if (!isSuccess) {
-                AlertService.sendAlertAndRedirect(response, Constants.PASSWORD_ERROR, "index.jsp");
-                return;
-            }
-
+            User user = new User(username, password);
+            boolean isSuccess;
             if ("/login".equals(path)) {
-                user = new User(username, password);
+
+                isSuccess = validator.validateLogin(user);
+
+                if(!isSuccess) {
+                    AlertService.sendAlertAndRedirect(response,Constants.ERROR, "index.jsp");
+                    return;
+                }
+
                 logger.info("authenticating user:: {}", username);
                 isSuccess = authenticationService.authenticate(user);
                 if (isSuccess) {
@@ -53,12 +51,17 @@ public class AuthenticationServlet extends HttpServlet {
             } else if ("/register".equals(path)) {
                 String confirmPassword = request.getParameter("confirmPassword");
                 String role = request.getParameter("role");
-                isSuccess = validator.validatePasswordConfirmation(password, confirmPassword);
                 user = new User(username, password, role);
-                isSuccess = authenticationService.register(user);
 
+                isSuccess = validator.validateRegistration(user,confirmPassword);
+                if(!isSuccess) {
+                    AlertService.sendAlertAndRedirect(response,Constants.ERROR, "register.jsp");
+                    return;
+                }
+
+                isSuccess = authenticationService.register(user);
                 if (isSuccess) {
-                    logger.info("{} registered", username);
+                    logger.info("{} registered", user);
                     AlertService.sendAlertAndRedirect(response, Constants.SUCCESS, "index.jsp");
 
                 } else {
@@ -68,7 +71,21 @@ public class AuthenticationServlet extends HttpServlet {
 
             } else {
                 logger.warn("{} {}", username, Constants.INVALID_PAGE_ERROR);
-                response.sendRedirect(request.getContextPath() + "/pageNotFound.jsp");
+                response.sendRedirect(request.getContextPath() + "pageNotFound.jsp");
+            }
+        } catch (AuthenticationException e) {
+            logger.error("authentication error: {}", e.getMessage());
+            try {
+                AlertService.sendAlertAndRedirect(response, Constants.VALIDATION_ERROR, request.getHeader("Referer"));
+            } catch (IOException ex) {
+                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
+            }
+        } catch (ValidationException e) {
+            logger.error("validation error: {}", e.getMessage());
+            try {
+                AlertService.sendAlertAndRedirect(response, Constants.VALIDATION_ERROR, request.getHeader("Referer"));
+            } catch (IOException ex) {
+                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
             }
         } catch (Exception e) {
             logger.error("error: {}", e.getMessage());
@@ -76,16 +93,10 @@ public class AuthenticationServlet extends HttpServlet {
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: ", ex);
-            }
-        } catch (ValidationException e) {
-            logger.error("validation error: {}", e.getMessage());
-            try {
-                AlertService.sendAlertAndRedirect(response, Constants.VALIDATION_ERROR, request.getHeader("Referer"));
-            } catch (IOException ex) {
-                logger.error("Error forwarding to error page: {}", ex.getMessage());
+                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
             }
         }
+
     }
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -108,7 +119,7 @@ public class AuthenticationServlet extends HttpServlet {
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error("Error forwarding to error page: {}", ex.getMessage());
+                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.example.taskbazaar.validation;
 
 import com.example.taskbazaar.exception.ValidationException;
+import com.example.taskbazaar.model.User;
 import com.example.taskbazaar.utility.Regex;
 
 public class Validator {
@@ -16,19 +17,18 @@ public class Validator {
         return Holder.INSTANCE;
     }
 
-    public boolean validateUsername(String username) {
-        return username != null && !username.trim().isEmpty();
+    public boolean validateLogin(User user) {
+        return user.getUsername() != null && user.getPassword() != null;
     }
-    public boolean validatePassword(String password) throws ValidationException {
-        if(!Regex.isValidPassword(password)) {
-            throw  new ValidationException("Invalid password");
+    public boolean validateRegistration(User user,String confirmPassword) throws ValidationException {
+        if(confirmPassword.equals(user.getPassword())) {
+            if(!Regex.isValidPassword(user.getPassword())) {
+                throw new ValidationException("Password contains invalid characters");
+            }
+            return true;
         }
-        return true;
-    }
-    public boolean validatePasswordConfirmation(String password,String confirmPassword) throws ValidationException {
-          if(!password.equals(confirmPassword)) {
+        else{
             throw new ValidationException("Password not match");
         }
-        return true;
     }
 }
