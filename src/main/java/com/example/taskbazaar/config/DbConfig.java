@@ -1,3 +1,7 @@
+/*
+ * author : Md. Sakil Ahmed
+ */
+
 package com.example.taskbazaar.config;
 
 import com.example.taskbazaar.utility.ConfigLoader;
@@ -30,7 +34,6 @@ public class DbConfig {
 
     private DbConfig() throws Exception {
         Class.forName(DRIVER);
-        logger.info("Driver Registered:: {}", DRIVER);
     }
 
     private static final class SingleObjectHolder {
@@ -45,7 +48,6 @@ public class DbConfig {
     }
 
     public static DbConfig getInstance() throws Exception {
-        logger.info("create instance of {}",DRIVER);
         return SingleObjectHolder.singleObject;
     }
 

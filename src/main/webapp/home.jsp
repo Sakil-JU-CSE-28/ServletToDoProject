@@ -1,4 +1,3 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%--
   Created by IntelliJ IDEA.
   User: sakil
@@ -6,6 +5,7 @@
   Time: 4:41 PM
   To change this template use File | Settings | File Templates.
 --%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page isELIgnored="false" %>
 
@@ -13,6 +13,7 @@
     // Redirect if user is not logged in
     if (session.getAttribute("username") == null) {
         response.sendRedirect("index.jsp");
+        return;
     }
 %>
 
@@ -22,10 +23,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
-
     <!-- Add Bootstrap for styling and navbar layout -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-
 </head>
 <body>
 
@@ -33,20 +32,27 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
         <a class="navbar-brand" href="home">TaskBazaar</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="createPost.jsp">Post_Job</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="works">Work_History</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="admin">Admin_Dashboard</a>
-                </li>
+                <c:if test="${sessionScope.role == 'buyer'}">
+                    <li class="nav-item">
+                        <a class="nav-link" href="createPost.jsp">Post_Job</a>
+                    </li>
+                </c:if>
+                <c:if test="${sessionScope.role == 'freelancer'}">
+                    <li class="nav-item">
+                        <a class="nav-link" href="works">Work_History</a>
+                    </li>
+                </c:if>
+                <c:if test="${sessionScope.role == 'admin'}">
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin">Admin_Dashboard</a>
+                    </li>
+                </c:if>
                 <li class="nav-item">
                     <a class="nav-link" href="logout">Logout</a>
                 </li>
@@ -67,7 +73,19 @@
                 <div class="card-body">
                     <h5 class="card-title">${post.title}</h5>
                     <p class="card-text">${post.description}</p>
-                    <a href="viewPost.jsp?id=${post.id}" class="btn btn-primary">View Post</a>
+                    <form action="view" method="post" style="display:inline;">
+                        <input type="hidden" name="postId" value="${post.id}">
+                        <button type="submit" class="btn btn-primary">View Post</button>
+                    </form>
+                    <c:if test="${sessionScope.role == 'admin'}">
+                        <form action="delete" method="post">
+                            <input type="hidden" name="postId" value="${post.id}">
+                            <button type="submit" class="delete-btn"
+                                    onclick="return confirm('Are you sure you want to delete this post?');">Delete
+                            </button>
+                        </form>
+                    </c:if>
+
                 </div>
             </div>
         </c:forEach>

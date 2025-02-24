@@ -1,8 +1,15 @@
+/*
+ * author : Md. Sakil Ahmed
+ * date : 21 feb 2024
+ */
 package com.example.taskbazaar.validation;
 
+import com.example.taskbazaar.dao.UserDao;
 import com.example.taskbazaar.exception.ValidationException;
 import com.example.taskbazaar.model.User;
-import com.example.taskbazaar.utility.Regex;
+import com.example.taskbazaar.utility.Constant;
+
+import java.sql.SQLException;
 
 public class Validator {
 
@@ -17,18 +24,26 @@ public class Validator {
         return Holder.INSTANCE;
     }
 
-    public boolean validateLogin(User user) {
-        return user.getUsername() != null && user.getPassword() != null;
-    }
-    public boolean validateRegistration(User user,String confirmPassword) throws ValidationException {
-        if(confirmPassword.equals(user.getPassword())) {
-            if(!Regex.isValidPassword(user.getPassword())) {
-                throw new ValidationException("Password contains invalid characters");
+    public void validateLogin(User user) throws ValidationException {
+        if(user.getUsername() == null) throw new ValidationException("username is null");
+        if(user.getPassword() == null) throw new ValidationException("password is null");
+        try {
+            boolean status = UserDao.getBlockStatusByUserName(user.getUsername());
+            if (status) {
+                throw new ValidationException("Account blocked!");
             }
-            return true;
+        } catch (SQLException ex) {
+            throw new ValidationException(Constant.INTERNAL_ERROR);
         }
-        else{
-            throw new ValidationException("Password not match");
+    }
+
+    public void validateRegistration(User user, String confirmPassword) throws ValidationException {
+        if (confirmPassword.equals(user.getPassword())) {
+            if (!confirmPassword.matches(Constant.PASSWORD_REGEX)) {
+                throw new ValidationException("Password not follow regular password pattern");
+            }
+        } else {
+            throw new ValidationException("Password and confirm password not match");
         }
     }
 }

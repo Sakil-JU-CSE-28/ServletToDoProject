@@ -1,7 +1,11 @@
+/*
+ * author : Md. Sakil Ahmed
+ */
+
 package com.example.taskbazaar.servlet;
 
-import com.example.taskbazaar.service.AcceptedBidService;
-import com.example.taskbazaar.utility.Constants;
+import com.example.taskbazaar.service.BidService;
+import com.example.taskbazaar.utility.Constant;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -10,19 +14,20 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 @WebServlet("/works")
 public class WorkServlet extends HttpServlet {
 
-    private final AcceptedBidService workService = AcceptedBidService.getInstance();
+    private final BidService bidService = BidService.getInstance();
     private final static Logger logger = LoggerFactory.getLogger(WorkServlet.class);
 
     public void doGet(HttpServletRequest req, HttpServletResponse res) {
         try {
             HttpSession session = req.getSession();
             String username = (String) session.getAttribute("username");
-            List<String> works = workService.getAllAcceptedBid(username);
+            List<String> works = bidService.getAllAcceptedBid(username);
             logger.info("{} has {} works", username, works.size());
             req.setAttribute("works", works);
             RequestDispatcher dispatcher = req.getRequestDispatcher("workHistory.jsp");
@@ -33,7 +38,7 @@ public class WorkServlet extends HttpServlet {
             try {
                 req.getRequestDispatcher("error.jsp").forward(req, res);
             } catch (Exception ex) {
-                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
+                logger.error(Constant.FORWARD_ERROR, ex.getMessage());
             }
         }
     }

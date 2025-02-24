@@ -13,7 +13,6 @@
         response.sendRedirect("index.jsp");
     }
     String postId = request.getParameter("postId");
-    System.out.println("Inside editPost.jsp id " + postId);
 %>
 
 <!DOCTYPE html>

@@ -1,3 +1,7 @@
+/*
+ * author : Md. Sakil Ahmed
+ */
+
 package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.dao.UserDao;
@@ -7,6 +11,9 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.NoSuchAlgorithmException;
+
+import static com.example.taskbazaar.utility.Common.hashPassword;
 
 
 public class AuthenticationService {
@@ -28,22 +35,27 @@ public class AuthenticationService {
         return authenticationService;
     }
 
-    public boolean authenticate(User user) throws AuthenticationException {
-        logger.info("authenticating : {}", user);
-        boolean isSuccess = UserDao.authenticateUser(user);
-        return isSuccess;
+    public boolean authenticate(User user) throws AuthenticationException, NoSuchAlgorithmException {
+
+        String userName = user.getUsername();
+        String storedHashedPassword = UserDao.getPasswordByUserName(userName);
+        String storedSalt = UserDao.getSaltByUsername(userName);
+        String inputPassword = user.getPassword();
+        logger.info("stored salt , input password:: {} , {}", storedSalt, inputPassword);
+        String inputHashedPassword = hashPassword(inputPassword, storedSalt);
+
+        return storedHashedPassword.equals(inputHashedPassword);
     }
 
     public boolean register(User user) throws AuthenticationException {
         String username = user.getUsername();
         String role = user.getRole();
         logger.info("Registering {} as {}", username, role);
-        boolean isUserExists = UserDao.isUserExists(username);
-        if (isUserExists) {
-            return false;
+        int totalUserInstance = UserDao.getUserCountByUsername(username);
+        if (totalUserInstance > 0) {
+            throw new AuthenticationException("User already exists");
         }
-        boolean isSuceess = UserDao.insertUser(user);
-        return isSuceess;
+        return UserDao.insertUser(user);
     }
 
     public void logOut(HttpSession session) {

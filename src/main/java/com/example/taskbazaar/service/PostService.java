@@ -1,9 +1,15 @@
+/*
+ * author : Md. Sakil Ahmed
+ */
+
 package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.dao.PostDao;
+import com.example.taskbazaar.dto.PostDTO;
 import com.example.taskbazaar.model.Post;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 
@@ -15,6 +21,7 @@ public class PostService {
     private PostService() {
         logger.info("PostService created");
     }
+
     public static PostService getInstance() {
         if (postService == null) {
             synchronized (PostService.class) {
@@ -32,17 +39,17 @@ public class PostService {
     }
 
     public boolean createPost(String username, String title, String content) {
-      boolean isSuccess = PostDao.createPost(username, title, content);
-      return isSuccess;
+        boolean isSuccessfull = PostDao.addPost(new PostDTO(username, title, content));
+        return isSuccessfull;
     }
 
     public boolean deletePost(int postId) throws Exception {
-       boolean isSuccess = PostDao.deletePost(postId);
-       return isSuccess;
+        boolean isSuccessfull = PostDao.deletePost(postId);
+        return isSuccessfull;
     }
 
-    public boolean updatePost(int postId,String newTitle, String newContent) {
-      boolean isSuccess = PostDao.updatePost(postId, newTitle, newContent);
-      return isSuccess;
+    public boolean updatePost(int postId, String newTitle, String newContent) {
+        boolean isSuccessfull = PostDao.updatePost(new PostDTO(postId, newTitle, newContent));
+        return isSuccessfull;
     }
 }

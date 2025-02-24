@@ -1,41 +1,48 @@
+/*
+ * author : Md. Sakil Ahmed
+ */
 package com.example.taskbazaar.dao;
+
 
 import com.example.taskbazaar.exception.AuthenticationException;
 import com.example.taskbazaar.model.User;
-import com.example.taskbazaar.service.DbConnectionService;
-import com.example.taskbazaar.utility.Queries;
+import com.example.taskbazaar.service.DatabaseService;
+import com.example.taskbazaar.utility.Constant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
-import static com.example.taskbazaar.utility.HashGenerator.hashPassword;
-import static com.example.taskbazaar.utility.HexByteConverter.bytesToHex;
-import static com.example.taskbazaar.utility.HexByteConverter.hexToBytes;
-import static com.example.taskbazaar.utility.SaltGenerator.generateSalt;
+import static com.example.taskbazaar.utility.Common.hashPassword;
+import static com.example.taskbazaar.utility.Common.bytesToHex;
+import static com.example.taskbazaar.utility.Common.generateSalt;
 
 public class UserDao {
-    public static synchronized boolean isUserExists(String username) throws AuthenticationException {
-        try (Connection connection = DbConnectionService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Queries.FIND_USER_BY_USERNAME)) {
+    private static final Logger logger = LoggerFactory.getLogger(UserDao.class);
+
+    public static int getUserCountByUsername(String username) throws AuthenticationException {
+        int count;
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.FIND_USER_BY_USERNAME)) {
             preparedStatement.setString(1, username);
             ResultSet resultSet = preparedStatement.executeQuery();
-            int count = resultSet.next() ? resultSet.getInt(1) : 0;
-            if (count > 0) {
-                throw new AuthenticationException("user already exists");
-            }
+            count = resultSet.next() ? resultSet.getInt(1) : 0;
         } catch (Exception e) {
             throw new AuthenticationException(e.getMessage());
         }
-        return false;
+        return count;
     }
+
     public static synchronized boolean insertUser(User user) throws AuthenticationException {
-        try (Connection connection = DbConnectionService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Queries.INSERT_USER)) {
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.INSERT_USER)) {
 
             byte[] salt = generateSalt();
-            String hashedPassword = hashPassword(user.getPassword(), salt);
             String saltString = bytesToHex(salt);
-
+            String hashedPassword = hashPassword(user.getPassword(), saltString);
             preparedStatement.setString(1, user.getUsername());
             preparedStatement.setString(2, hashedPassword);
             preparedStatement.setString(3, user.getRole());
@@ -44,52 +51,119 @@ public class UserDao {
             preparedStatement.executeUpdate();
 
         } catch (Exception e) {
+            logger.error("error:: {}", e.getMessage());
             throw new AuthenticationException(e.getMessage());
         }
         return true;
     }
 
-    public static synchronized boolean authenticateUser(User user) throws AuthenticationException {
-        String userName = user.getUsername();
-        try (Connection connection = DbConnectionService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Queries.SELECT_PASSWORD_BY_USERNAME)) {
+    public static String getPasswordByUserName(String userName) throws AuthenticationException {
+        String storedHashedPassword = null;
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.SELECT_PASSWORD_BY_USERNAME)) {
             preparedStatement.setString(1, userName);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    String storedHashedPassword = resultSet.getString("password");
-                    String storedSalt = resultSet.getString("salt");
-
-                    // Convert the stored salt to bytes
-                    byte[] salt = hexToBytes(storedSalt);
-
-                    // Hash the input password with the stored salt
-                    String inputHashedPassword = hashPassword(user.getPassword(), salt);
-
-                    if (storedHashedPassword.equals(inputHashedPassword)) {
-                        return true;
-                    }
+                    storedHashedPassword = resultSet.getString("password");
                 }
             }
         } catch (SQLException e) {
-            throw new AuthenticationException("Database error occurred:: " + e.getMessage());
+            logger.error("SQL exception:: {}", e.getMessage());
+            throw new AuthenticationException("Database error occurred");
         } catch (Exception e) {
-            throw new AuthenticationException("Unexpected error occurred:: " + e.getMessage());
+            logger.error("error:: {}", e.getMessage());
+            throw new AuthenticationException("Unexpected error occurred");
         }
-        return false;
+        return storedHashedPassword;
     }
 
-    public static synchronized String getUserRole(String username) throws SQLException {
+    public static String getSaltByUsername(String userName) throws AuthenticationException {
+        String storedSalt = null;
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.SELECT_PASSWORD_BY_USERNAME)) {
+            preparedStatement.setString(1, userName);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    storedSalt = resultSet.getString("salt");
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Database error occurred:: " + e.getMessage());
+            throw new AuthenticationException("");
+        } catch (Exception e) {
+            logger.error("Unexpected error occurred:: " + e.getMessage());
+            throw new AuthenticationException("Unexpected error occurred:: " + e.getMessage());
+        }
+        if (storedSalt == null) {
+            logger.error("Salt is null");
+            throw new AuthenticationException("user not exist");
+        }
+        return storedSalt;
+    }
+
+    public static String getUserRoleByUsername(String username) throws SQLException {
         String role;
-        try (Connection connection = DbConnectionService.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(Queries.USER_ROLE_BY_USERNAME)) {
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.USER_ROLE_BY_USERNAME)) {
             preparedStatement.setString(1, username);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             role = resultSet.getString("role");
 
         } catch (Exception e) {
-            throw new SQLException(e);
+            logger.error("error:: {}", e.getMessage());
+            throw new SQLException(e.getMessage());
         }
         return role;
     }
 
+    public static List<User> getAllUser() throws SQLException {
+        List<User> users = new ArrayList<>();
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.GET_ALL_USER)) {
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                String userName = resultSet.getString("username");
+                String role = resultSet.getString("role");
+                boolean isDeleted = resultSet.getBoolean("isBlocked");
+                User user = new User(userName, role, isDeleted);
+                users.add(user);
+            }
+        } catch (Exception e) {
+            logger.error("error:: {}", e.getMessage());
+            throw new SQLException(e.getMessage());
+        }
+        return users;
+    }
+
+    public static synchronized boolean updateIsBlockedStatusByUsername(String usernameForBlock, boolean status) throws SQLException {
+        boolean isBlocked = false;
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement updateStatement = connection.prepareStatement(Constant.Queries.BLOCK_USER); PreparedStatement selectStatement = connection.prepareStatement(Constant.Queries.CHECK_BLOCK_STATUS_BY_USERNAME)) {
+            updateStatement.setBoolean(1, status);
+            updateStatement.setString(2, usernameForBlock);
+            updateStatement.executeUpdate();
+            selectStatement.setString(1, usernameForBlock);
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    isBlocked = resultSet.getBoolean("isBlocked");
+                }
+            }
+        } catch (Exception e) {
+            logger.error("error:: {}", e.getMessage());
+            throw new SQLException(e.getMessage());
+        }
+        return isBlocked;
+    }
+
+    public static boolean getBlockStatusByUserName(String username) throws SQLException {
+        boolean isBlocked = false;
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement selectStatement = connection.prepareStatement(Constant.Queries.CHECK_BLOCK_STATUS_BY_USERNAME)) {
+            selectStatement.setString(1, username);
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    isBlocked = resultSet.getBoolean("isBlocked");
+                }
+            }
+        } catch (Exception e) {
+            logger.error("error:: {}", e.getMessage());
+            throw new SQLException(e.getMessage());
+        }
+        return isBlocked;
+    }
 }

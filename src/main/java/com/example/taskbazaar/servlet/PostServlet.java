@@ -1,22 +1,29 @@
+/*
+ * author : Md. Sakil Ahmed
+ */
+
 package com.example.taskbazaar.servlet;
 
+import com.example.taskbazaar.dao.PostDao;
+import com.example.taskbazaar.dto.PostDTO;
 import com.example.taskbazaar.model.Post;
 import com.example.taskbazaar.service.BidService;
 import com.example.taskbazaar.service.PostService;
-import com.example.taskbazaar.service.AlertService;
+import com.example.taskbazaar.utility.PopUpAlert;
 import com.example.taskbazaar.service.UserService;
-import com.example.taskbazaar.utility.Constants;
+import com.example.taskbazaar.utility.Constant;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-@WebServlet({"/home", "/save", "/edit", "/delete"})
+@WebServlet({"/home", "/save", "/edit", "/delete", "/view"})
 public class PostServlet extends HttpServlet {
 
     private final Logger logger = LoggerFactory.getLogger(PostServlet.class);
@@ -40,7 +47,7 @@ public class PostServlet extends HttpServlet {
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
+                logger.error(Constant.FORWARD_ERROR, ex.getMessage());
             }
         }
     }
@@ -57,25 +64,25 @@ public class PostServlet extends HttpServlet {
                     String title = request.getParameter("title");
                     String content = request.getParameter("content");
                     if (!"buyer".equals(userRole)) {
-                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
                         return;
                     }
 
                     logger.info("saving post {}", title);
-                    boolean isSuccess = postService.createPost(username, title, content);
+                    boolean isSuccessful = postService.createPost(username, title, content);
 
-                    if (isSuccess) {
+                    if (isSuccessful) {
                         logger.info("{} post {}", username, title);
                         response.sendRedirect("/home");
                     } else {
                         logger.info("{} post {} failed", username, title);
-                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
                     }
                 }
                 case "/delete" -> {
                     int postId = Integer.parseInt(request.getParameter("postId"));
                     if (!"admin".equals(userRole)) {
-                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
                         return;
                     }
 
@@ -84,10 +91,10 @@ public class PostServlet extends HttpServlet {
                     boolean isDeleted = postService.deletePost(postId);
                     if (isDeleted) {
                         logger.info("{} deleted post {}", username, postId);
-                        response.sendRedirect("/admin"); // Refresh page after deletion
+                        response.sendRedirect("/home"); // Refresh page after deletion
                     } else {
                         logger.info("{} deleted post {} failed", username, postId);
-                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
                     }
                 }
                 case "/edit" -> {
@@ -102,12 +109,32 @@ public class PostServlet extends HttpServlet {
                     if (isSuccess) {
                         logger.info("{} updated post successfully", username);
                         isUpdated = postService.updatePost(Integer.parseInt(postId), title, description);
-                        AlertService.sendAlertAndRedirect(response, isUpdated ? Constants.SUCCESS : Constants.ERROR, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, isUpdated ? Constant.SUCCESS : Constant.ERROR, "/home");
                     } else {
                         logger.info("{} is not owner", username);
-                        AlertService.sendAlertAndRedirect(response, Constants.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
                     }
 
+                }
+                case "/view" -> {
+                    String postId = request.getParameter("postId");
+                    System.out.println(postId);
+                    if (postId == null) {
+                        response.sendRedirect("/home");
+                        return;
+                    }
+
+                    PostDTO post = PostDao.getPostById(Integer.parseInt(postId));
+                    if (post == null) {
+                        request.setAttribute("errorMessage", "Post not found!");
+                        request.getRequestDispatcher("error.jsp").forward(request, response);
+                        return;
+                    }
+                    System.out.println(post.title + "::" + post.content + "::" + post.author);
+                    HttpSession session = request.getSession();
+                    session.setAttribute("postId", postId);
+                    session.setAttribute("post", post);
+                    request.getRequestDispatcher("viewPost.jsp").forward(request, response);
                 }
                 case null, default -> {
                     logger.info("page not found");
@@ -120,7 +147,7 @@ public class PostServlet extends HttpServlet {
             try {
                 request.getRequestDispatcher("error.jsp").forward(request, response);
             } catch (Exception ex) {
-                logger.error(Constants.FORWARD_ERROR, ex.getMessage());
+                logger.error(Constant.FORWARD_ERROR, ex.getMessage());
             }
         }
     }
