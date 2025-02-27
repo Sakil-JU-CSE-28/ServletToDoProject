@@ -1,12 +1,11 @@
 /*
  * author : Md. Sakil Ahmed
- * Date : 21 feb 2024
  */
 package com.example.taskbazaar.servlet;
 
+import com.example.taskbazaar.dto.UserDTO;
 import com.example.taskbazaar.exception.AuthenticationException;
 import com.example.taskbazaar.exception.ValidationException;
-import com.example.taskbazaar.model.User;
 import com.example.taskbazaar.service.AuthenticationService;
 import com.example.taskbazaar.utility.PopUpAlert;
 import com.example.taskbazaar.service.UserService;
@@ -20,7 +19,7 @@ import org.slf4j.LoggerFactory;
 @WebServlet(value = {"/login", "/logout", "/register"})
 public class AuthenticationServlet extends HttpServlet {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationServlet.class);
+    private Logger logger = LoggerFactory.getLogger(AuthenticationServlet.class);
     private final AuthenticationService authenticationService = AuthenticationService.getInstance();
     private final UserService userService = UserService.getInstance();
     private final Validator validator = Validator.getInstance();
@@ -30,7 +29,7 @@ public class AuthenticationServlet extends HttpServlet {
             String username = request.getParameter("username");
             String password = request.getParameter("password");
             String path = request.getServletPath();
-            User user = new User(username, password);
+            UserDTO user = new UserDTO(username, password, null, null, null,false);
             logger.info("User : {}", user);
             boolean isSuccess;
             if ("/login".equals(path)) {
@@ -40,19 +39,19 @@ public class AuthenticationServlet extends HttpServlet {
                 if (isSuccess) {
                     HttpSession session = request.getSession();
                     session.setAttribute("username", username);
-                    String role = userService.getUserRole(username);
+                    String role = userService.getRole(username);
                     session.setAttribute("role", role);
                     logger.info("User: {} logged in", username);
                     response.sendRedirect("/home");
                 } else {
                     logger.info("{} enter wrong password", username);
-                    PopUpAlert.sendAlertAndRedirect(response, Constant.PASSWORD_NOT_MATCH, "index.jsp");
+                    PopUpAlert.sendAlertAndRedirect(response, Constant.INVALID_PASSWORD, "index.jsp");
                 }
             } else if ("/register".equals(path)) {
                 String confirmPassword = request.getParameter("confirmPassword");
                 String role = request.getParameter("role");
-                user = new User(username, password, role);
-                validator.validateRegistration(user, confirmPassword);
+                user = new UserDTO(username, password, confirmPassword, role, null,false);
+                validator.validateRegistration(user);
                 isSuccess = authenticationService.register(user);
                 if (isSuccess) {
                     logger.info("{} registered", user);
@@ -69,17 +68,15 @@ public class AuthenticationServlet extends HttpServlet {
             }
         } catch (ValidationException e) {
             logger.error("validation error: {}", e.getMessage());
-            request.setAttribute("errorMessage", e.getMessage());
             try {
-                request.getRequestDispatcher("error.jsp").forward(request, response);
+                PopUpAlert.sendAlertAndRedirect(response, e.getMessage(), request.getHeader("Referer"));
             } catch (Exception ex) {
                 logger.error(Constant.FORWARD_ERROR, ex.getMessage());
             }
         } catch (AuthenticationException e) {
             logger.error("authentication error: {}", e.getMessage());
-            request.setAttribute("errorMessage", e.getMessage());
             try {
-                request.getRequestDispatcher("error.jsp").forward(request, response);
+                PopUpAlert.sendAlertAndRedirect(response, e.getMessage(), request.getHeader("Referer"));
             } catch (Exception ex) {
                 logger.error(Constant.FORWARD_ERROR, ex.getMessage());
             }
@@ -119,4 +116,5 @@ public class AuthenticationServlet extends HttpServlet {
             }
         }
     }
+
 }

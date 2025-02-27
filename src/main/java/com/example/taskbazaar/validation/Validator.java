@@ -5,45 +5,59 @@
 package com.example.taskbazaar.validation;
 
 import com.example.taskbazaar.dao.UserDao;
+import com.example.taskbazaar.dto.UserDTO;
 import com.example.taskbazaar.exception.ValidationException;
-import com.example.taskbazaar.model.User;
 import com.example.taskbazaar.utility.Constant;
 
 import java.sql.SQLException;
 
 public class Validator {
 
+    private volatile static Validator instance = null;
+    private UserDao userDao = UserDao.getInstance();
+
     private Validator() {
     }
 
-    private static class Holder {
-        private static final Validator INSTANCE = new Validator();
-    }
 
     public static Validator getInstance() {
-        return Holder.INSTANCE;
+        if (instance == null) {
+            synchronized (Validator.class) {
+                if (instance == null) {
+                    instance = new Validator();
+                }
+            }
+        }
+        return instance;
     }
 
-    public void validateLogin(User user) throws ValidationException {
-        if(user.getUsername() == null) throw new ValidationException("username is null");
-        if(user.getPassword() == null) throw new ValidationException("password is null");
+    public void destroyInstance() {
+        userDao = null;
+        instance = null;
+    }
+
+    public void validateLogin(UserDTO user) throws ValidationException {
+        if (user.username() == null || user.username().isEmpty())
+            throw new ValidationException(Constant.USERNAME_ERROR);
+        if (user.password() == null || user.password().isEmpty())
+            throw new ValidationException(Constant.PASSWORD_ERROR);
         try {
-            boolean status = UserDao.getBlockStatusByUserName(user.getUsername());
+            boolean status = userDao.getBlockStatusByUserName(user.username());
             if (status) {
-                throw new ValidationException("Account blocked!");
+                throw new ValidationException(Constant.ACCOUNT_BLOCKED);
             }
         } catch (SQLException ex) {
             throw new ValidationException(Constant.INTERNAL_ERROR);
         }
     }
 
-    public void validateRegistration(User user, String confirmPassword) throws ValidationException {
-        if (confirmPassword.equals(user.getPassword())) {
-            if (!confirmPassword.matches(Constant.PASSWORD_REGEX)) {
-                throw new ValidationException("Password not follow regular password pattern");
+    public void validateRegistration(UserDTO user) throws ValidationException {
+        if (user.confirmPassword().equals(user.password())) {
+            if (!user.confirmPassword().matches(Constant.PASSWORD_REGEX)) {
+                throw new ValidationException(Constant.REGEX_ERROR);
             }
         } else {
-            throw new ValidationException("Password and confirm password not match");
+            throw new ValidationException(Constant.PASSWORD_NOT_MATCH);
         }
     }
 }

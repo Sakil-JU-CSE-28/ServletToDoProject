@@ -4,7 +4,8 @@
  */
 package com.example.taskbazaar.servlet;
 
-import com.example.taskbazaar.model.User;
+import com.example.taskbazaar.dto.UserDTO;
+import com.example.taskbazaar.exception.DbException;
 import com.example.taskbazaar.utility.PopUpAlert;
 import com.example.taskbazaar.service.UserService;
 import com.example.taskbazaar.utility.Constant;
@@ -16,12 +17,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 @WebServlet({"/admin", "/block", "/unBlock"})
 public class AdminServlet extends HttpServlet {
 
-    private final Logger logger = LoggerFactory.getLogger(AdminServlet.class);
+    private Logger logger = LoggerFactory.getLogger(AdminServlet.class);
     private final UserService userService = UserService.getInstance();
 
     public void doGet(HttpServletRequest req, HttpServletResponse res) {
@@ -30,10 +32,10 @@ public class AdminServlet extends HttpServlet {
             if ("/admin".equals(path)) {
                 String username = (String) req.getSession().getAttribute("username");
                 logger.info("{} try to access admin page", username);
-                String userRole = userService.getUserRole(username);
+                String userRole = userService.getRole(username);
                 logger.info("{} is logged in as {}", username, userRole);
                 if ("admin".equals(userRole)) {
-                    List<User> users = userService.getUsers();
+                    List<UserDTO> users = userService.getUsers();
                     logger.info("Total {} users", users.size());
                     req.setAttribute("users", users);
                     RequestDispatcher dispatcher = req.getRequestDispatcher("admin.jsp");
@@ -43,8 +45,15 @@ public class AdminServlet extends HttpServlet {
                     PopUpAlert.sendAlertAndRedirect(res, Constant.UNAUTHORIZED, "/home");
                 }
             }
+        } catch (DbException e) {
+            logger.error("database error in retrieving users:: {}", e.getMessage());
+            try {
+                PopUpAlert.sendAlertAndRedirect(res, Constant.INTERNAL_ERROR, req.getHeader("Referer"));
+            } catch (IOException ex) {
+                logger.error("error in forwarding from dbexception in admin:: {}", ex.getMessage());
+            }
         } catch (Exception e) {
-            logger.error("error occurred: {}", e.getMessage());
+            logger.error("error to access admin: {}", e.getMessage());
             req.setAttribute("errorMessage", Constant.INTERNAL_ERROR);
             try {
                 req.getRequestDispatcher("error.jsp").forward(req, res);
@@ -60,7 +69,7 @@ public class AdminServlet extends HttpServlet {
 
             String username = (String) req.getSession().getAttribute("username");
             logger.info("{} try to access admin page", username);
-            String userRole = userService.getUserRole(username);
+            String userRole = userService.getRole(username);
             logger.info("{} is logged in as {}", username, userRole);
             if ("admin".equals(userRole)) {
                 if ("/block".equals(path)) {
@@ -94,8 +103,15 @@ public class AdminServlet extends HttpServlet {
                 PopUpAlert.sendAlertAndRedirect(res, Constant.UNAUTHORIZED, "/home");
             }
 
+        } catch (DbException e) {
+            logger.error("database error in admin post request:: {}", e.getMessage());
+            try {
+                PopUpAlert.sendAlertAndRedirect(res, Constant.INTERNAL_ERROR, req.getHeader("Referer"));
+            } catch (IOException ex) {
+                logger.error("error in forwarding from admin:: {}", ex.getMessage());
+            }
         } catch (Exception e) {
-            logger.error("error occurred: {}", e.getMessage());
+            logger.error("error in blocking: {}", e.getMessage());
             req.setAttribute("errorMessage", Constant.INTERNAL_ERROR);
             try {
                 req.getRequestDispatcher("error.jsp").forward(req, res);
@@ -104,5 +120,6 @@ public class AdminServlet extends HttpServlet {
             }
         }
     }
+
 
 }

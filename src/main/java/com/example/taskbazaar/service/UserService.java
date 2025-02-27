@@ -5,20 +5,15 @@
 package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.dao.UserDao;
-import com.example.taskbazaar.model.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.SQLException;
+import com.example.taskbazaar.dto.UserDTO;
+import com.example.taskbazaar.exception.DbException;
 import java.util.List;
 
 public class UserService {
     private static volatile UserService userService = null;
-    private Logger logger = LoggerFactory.getLogger(UserService.class);
+    private final UserDao userDao = UserDao.getInstance();
 
-    private UserService() {
-        logger.info("UserService created");
-    }
+    private UserService() {}
 
     public static UserService getInstance() {
         if (userService == null) {
@@ -31,22 +26,23 @@ public class UserService {
         return userService;
     }
 
-    public String getUserRole(String username) throws SQLException {
-        String role = UserDao.getUserRoleByUsername(username);
+    public String getRole(String username) throws DbException {
+        UserDTO user = userDao.getDetailsByUsername(username);
+        String role = user.role();
         return role;
     }
 
-    public List<User> getUsers() throws SQLException {
-        List<User> users = UserDao.getAllUser();
+    public List<UserDTO> getUsers() throws DbException {
+        List<UserDTO> users = userDao.getAll();
         return users;
     }
 
-    public boolean blockUser(String usernameForBlock) throws SQLException {
-        return UserDao.updateIsBlockedStatusByUsername(usernameForBlock, true);
+    public boolean blockUser(String usernameForBlock) throws DbException {
+        return userDao.updateBlockedStatusByUsername(usernameForBlock, true);
     }
 
-    public boolean unBlockUser(String usernameForUnBlock) throws SQLException {
-        boolean result = UserDao.updateIsBlockedStatusByUsername(usernameForUnBlock, false);
+    public boolean unBlockUser(String usernameForUnBlock) throws DbException {
+        boolean result = userDao.updateBlockedStatusByUsername(usernameForUnBlock, false);
         return !result ? true : false;
     }
 }

@@ -21,13 +21,13 @@ import java.util.List;
 public class WorkServlet extends HttpServlet {
 
     private final BidService bidService = BidService.getInstance();
-    private final static Logger logger = LoggerFactory.getLogger(WorkServlet.class);
+    private Logger logger = LoggerFactory.getLogger(WorkServlet.class);
 
     public void doGet(HttpServletRequest req, HttpServletResponse res) {
         try {
             HttpSession session = req.getSession();
             String username = (String) session.getAttribute("username");
-            List<String> works = bidService.getAllAcceptedBid(username);
+            List<String> works = bidService.getAllAccepted(username);
             logger.info("{} has {} works", username, works.size());
             req.setAttribute("works", works);
             RequestDispatcher dispatcher = req.getRequestDispatcher("workHistory.jsp");
@@ -42,4 +42,5 @@ public class WorkServlet extends HttpServlet {
             }
         }
     }
+
 }

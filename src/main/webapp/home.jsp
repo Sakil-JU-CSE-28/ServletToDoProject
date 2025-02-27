@@ -71,15 +71,15 @@
         <c:forEach var="post" items="${posts}">
             <div class="card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title">${post.title}</h5>
-                    <p class="card-text">${post.description}</p>
+                    <h5 class="card-title">${post.title()}</h5>
+                    <p class="card-text">${post.content()}</p>
                     <form action="view" method="post" style="display:inline;">
-                        <input type="hidden" name="postId" value="${post.id}">
+                        <input type="hidden" name="postId" value="${post.postId()}">
                         <button type="submit" class="btn btn-primary">View Post</button>
                     </form>
                     <c:if test="${sessionScope.role == 'admin'}">
                         <form action="delete" method="post">
-                            <input type="hidden" name="postId" value="${post.id}">
+                            <input type="hidden" name="postId" value="${post.postId()}">
                             <button type="submit" class="delete-btn"
                                     onclick="return confirm('Are you sure you want to delete this post?');">Delete
                             </button>

@@ -7,7 +7,7 @@
 --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List" %>
-<%@ page import="com.example.taskbazaar.model.User" %>
+<%@ page import="com.example.taskbazaar.dto.UserDTO" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <!DOCTYPE html>
@@ -27,19 +27,19 @@
         <th>Action</th>
     </tr>
     <%
-        List<User> users = (List<User>) request.getAttribute("users");
+        List<UserDTO> users = (List<UserDTO>) request.getAttribute("users");
         if (users != null && !users.isEmpty()) {
-            for (User user : users) {
-                boolean isBlocked = user.isBlocked(); // Store in a variable to avoid EL issues
+            for (UserDTO user : users) {
+                boolean isBlocked = user.isBlocked();
     %>
     <tr>
-        <td><%= user.getUsername() %></td>
-        <td><%= user.getRole() %></td>
+        <td><%= user.username() %></td>
+        <td><%= user.role() %></td>
         <td><%= isBlocked %></td>
         <td>
             <% if (!isBlocked) { %>
             <form action="block" method="post">
-                <input type="hidden" name="username" value="<%= user.getUsername() %>">
+                <input type="hidden" name="username" value="<%= user.username() %>">
                 <button type="submit" class="delete-btn"
                         onclick="return confirm('Are you sure you want to block this account?');">
                     Block
@@ -47,7 +47,7 @@
             </form>
             <% } else { %>
             <form action="unBlock" method="post">
-                <input type="hidden" name="username" value="<%= user.getUsername() %>">
+                <input type="hidden" name="username" value="<%= user.username() %>">
                 <button type="submit" class="delete-btn"
                         onclick="return confirm('Are you sure you want to unblock this account?');">
                     UnBlock

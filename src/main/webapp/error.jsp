@@ -22,7 +22,7 @@
 <div class="error-container">
     <h1>Oops! Something went wrong</h1>
     <p><%= request.getAttribute("errorMessage") != null ? request.getAttribute("errorMessage") : "An unexpected error occurred." %></p>
-    <a href="<%= request.getContextPath() %>/home">Go Back to Home</a>
+    <a href="<%= request.getHeader("Referer") %>">Go Back</a>
 </div>
 </body>
 </html>

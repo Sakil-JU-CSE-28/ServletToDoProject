@@ -36,10 +36,10 @@
 <div class="container">
     <h1>Post Details</h1>
     <div class="post-title">
-        <%= post.title %>
+        <%= post.title() %>
     </div>
     <div class="post-description">
-        <%= post.content %>
+        <%= post.content() %>
     </div>
 
     <c:if test="${sessionScope.role=='buyer'}">

@@ -5,8 +5,10 @@
 package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.dao.UserDao;
+import com.example.taskbazaar.dto.UserDTO;
 import com.example.taskbazaar.exception.AuthenticationException;
-import com.example.taskbazaar.model.User;
+import com.example.taskbazaar.exception.DbException;
+import com.example.taskbazaar.utility.Constant;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +19,10 @@ import static com.example.taskbazaar.utility.Common.hashPassword;
 
 
 public class AuthenticationService {
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
+
+    private final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
     private static volatile AuthenticationService authenticationService = null;
+    private final UserDao userDao = UserDao.getInstance();
 
     private AuthenticationService() {
         logger.info("AuthenticationService created");
@@ -35,27 +39,27 @@ public class AuthenticationService {
         return authenticationService;
     }
 
-    public boolean authenticate(User user) throws AuthenticationException, NoSuchAlgorithmException {
 
-        String userName = user.getUsername();
-        String storedHashedPassword = UserDao.getPasswordByUserName(userName);
-        String storedSalt = UserDao.getSaltByUsername(userName);
-        String inputPassword = user.getPassword();
-        logger.info("stored salt , input password:: {} , {}", storedSalt, inputPassword);
+    public boolean authenticate(UserDTO user) throws  NoSuchAlgorithmException, DbException {
+        logger.info("authenticating user :: {}", user);
+        String userName = user.username();
+        UserDTO storedUser = userDao.getDetailsByUsername(userName);
+        String storedHashedPassword = storedUser.password();
+        String storedSalt = storedUser.salt();
+        String inputPassword = user.password();
         String inputHashedPassword = hashPassword(inputPassword, storedSalt);
-
         return storedHashedPassword.equals(inputHashedPassword);
     }
 
-    public boolean register(User user) throws AuthenticationException {
-        String username = user.getUsername();
-        String role = user.getRole();
+    public boolean register(UserDTO user) throws AuthenticationException, DbException {
+        String username = user.username();
+        String role = user.role();
         logger.info("Registering {} as {}", username, role);
-        int totalUserInstance = UserDao.getUserCountByUsername(username);
-        if (totalUserInstance > 0) {
-            throw new AuthenticationException("User already exists");
+        UserDTO userInstance = userDao.getDetailsByUsername(username);
+        if (userInstance != null) {
+            throw new AuthenticationException(Constant.USER_EXISTS);
         }
-        return UserDao.insertUser(user);
+        return userDao.insert(user);
     }
 
     public void logOut(HttpSession session) {
