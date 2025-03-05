@@ -30,26 +30,27 @@ public class PostService {
     }
 
     public List<PostDTO> getPosts() throws PostException {
-        List<PostDTO> posts = postDao.getPosts();
-        return posts;
+        return postDao.getPosts();
     }
 
     public boolean create(String username, String title, String content) throws PostException {
-        boolean isSuccessfull = postDao.add(new PostDTO(username, title, content));
-        return isSuccessfull;
+        return postDao.add(new PostDTO(username, title, content));
     }
 
     public boolean delete(int postId) throws Exception {
-        boolean isSuccessfull = postDao.delete(postId);
-        return isSuccessfull;
+        return postDao.delete(postId);
     }
 
     public boolean update(int postId, String newTitle, String newContent) throws PostException {
-        boolean isSuccessfull = postDao.update(new PostDTO(postId, newTitle, newContent));
-        return isSuccessfull;
+        return postDao.update(new PostDTO(postId, newTitle, newContent));
     }
 
     public PostDTO getById(int id) throws PostException {
-        return postDao.getById(id);
+        PostDTO post = postDao.getById(id);
+        if(post == null) {
+            throw new PostException("Post not found for id " + id);
+        }
+        return post;
     }
+
 }

@@ -7,13 +7,16 @@ package com.example.taskbazaar.service;
 import com.example.taskbazaar.dao.UserDao;
 import com.example.taskbazaar.dto.UserDTO;
 import com.example.taskbazaar.exception.DbException;
+import com.example.taskbazaar.model.User;
+
 import java.util.List;
 
 public class UserService {
     private static volatile UserService userService = null;
     private final UserDao userDao = UserDao.getInstance();
 
-    private UserService() {}
+    private UserService() {
+    }
 
     public static UserService getInstance() {
         if (userService == null) {
@@ -26,15 +29,25 @@ public class UserService {
         return userService;
     }
 
-    public String getRole(String username) throws DbException {
-        UserDTO user = userDao.getDetailsByUsername(username);
-        String role = user.role();
-        return role;
+
+    public UserDTO getUser(String username) throws DbException {
+        User retrievedUser = userDao.getByUsername(username);
+        UserDTO user = null;
+        if (retrievedUser != null) {
+            user = new UserDTO(retrievedUser.getUsername(),
+                    retrievedUser.getPassword(), null,
+                    retrievedUser.getRole(), retrievedUser.getSalt(),
+                    retrievedUser.isBlocked());
+        }
+        return user;
+    }
+
+    public boolean insert(UserDTO user) throws DbException {
+        return userDao.insert(user);
     }
 
     public List<UserDTO> getUsers() throws DbException {
-        List<UserDTO> users = userDao.getAll();
-        return users;
+        return userDao.getAll();
     }
 
     public boolean blockUser(String usernameForBlock) throws DbException {
@@ -43,6 +56,6 @@ public class UserService {
 
     public boolean unBlockUser(String usernameForUnBlock) throws DbException {
         boolean result = userDao.updateBlockedStatusByUsername(usernameForUnBlock, false);
-        return !result ? true : false;
+        return !result;
     }
 }

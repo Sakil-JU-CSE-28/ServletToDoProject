@@ -19,7 +19,7 @@ public class Common {
     }
 
     public static byte[] hexToBytes(String hex) {
-        if(hex == null) {
+        if (hex == null) {
             throw new IllegalArgumentException("Hex string cannot be null");
         }
         int len = hex.length();

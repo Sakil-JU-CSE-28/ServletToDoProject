@@ -12,9 +12,6 @@ public record PostDTO(String author, String title, String content, int postId) i
         this(author, title, content, 0);
     }
 
-    public PostDTO(String author, int postId) {
-        this(author, null, null, postId);
-    }
 
     public PostDTO(int postId, String title, String content) {
         this(null, title, content, postId);

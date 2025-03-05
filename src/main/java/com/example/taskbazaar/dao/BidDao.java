@@ -6,6 +6,7 @@ package com.example.taskbazaar.dao;
 
 import com.example.taskbazaar.exception.BidException;
 import com.example.taskbazaar.exception.DbException;
+import com.example.taskbazaar.model.Bid;
 import com.example.taskbazaar.service.DatabaseService;
 import com.example.taskbazaar.utility.Constant;
 import org.slf4j.Logger;
@@ -21,7 +22,10 @@ public class BidDao {
 
     private final Logger logger = LoggerFactory.getLogger(BidDao.class);
     private volatile static BidDao bidDao = null;
-    private BidDao() {}
+
+    private BidDao() {
+    }
+
     public static BidDao getInstance() {
         if (bidDao == null) {
             synchronized (BidDao.class) {
@@ -46,13 +50,13 @@ public class BidDao {
                 bidders.add(resultSet.getString("bidder_username"));
             }
         } catch (Exception e) {
-            logger.error("error in retrieving bidders {}",e.getMessage());
-            throw new BidException(Constant.INTERNAL_ERROR);
+            logger.error("error in retrieving bidders {}", e.getMessage());
+            throw new BidException(Constant.Error.INTERNAL_ERROR);
         }
         return bidders;
     }
 
-    public synchronized boolean add(String postId, String username) throws BidException {
+    public boolean add(String postId, String username) throws BidException {
         try (Connection connection = DatabaseService.getConnection()) {
             PreparedStatement stmt = connection.prepareStatement(Constant.Queries.INSERT_BID);
             stmt.setString(1, postId);
@@ -60,56 +64,45 @@ public class BidDao {
             stmt.executeUpdate();
             return true;
         } catch (Exception e) {
-            logger.error("error in adding bids {}",e.getMessage());
-            throw new BidException(Constant.INTERNAL_ERROR);
+            logger.error("error in adding bids {}", e.getMessage());
+            throw new BidException(Constant.Error.INTERNAL_ERROR);
         }
     }
 
-    public int getCountByUsername(String username, int postId) throws DbException {
-        int count = 0;
+    public Bid getById(String username, int postId) throws DbException {
+        Bid bid = null;
         try (Connection connection = DatabaseService.getConnection();
-             PreparedStatement statement = connection.prepareStatement(Constant.Queries.BID_COUNT_BY_USERNAME)) {
+             PreparedStatement statement = connection.prepareStatement(Constant.Queries.BID_BY_ID)) {
             statement.setString(1, username);
             statement.setInt(2, postId);
             ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) count = resultSet.getInt(1);
+            if (resultSet.next()) {
+                String bidder_name = resultSet.getString("bidder_username");
+                int post_id = resultSet.getInt("post_id");
+                boolean isAccepted = resultSet.getBoolean("isAccepted");
+                bid = new Bid(bidder_name, post_id, isAccepted);
+            }
 
         } catch (Exception e) {
-            logger.error("error in retrieving bids {}",e.getMessage());
-            throw new DbException(Constant.INTERNAL_ERROR);
+            logger.error("error in retrieving bids {}", e.getMessage(), e);
+            throw new DbException(Constant.Error.INTERNAL_ERROR);
         }
-        return count;
+        return bid;
     }
 
-    public synchronized boolean updateStatus(String postId, String workerUsername) throws BidException {
+    public void addBidder(String postId, String workerUsername) throws BidException {
 
         try (Connection connection = DatabaseService.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.ADD_BIDER)) {
             preparedStatement.setString(1, postId);
             preparedStatement.setString(2, workerUsername);
             preparedStatement.executeUpdate();
-            return true;
         } catch (Exception e) {
-            logger.error("error in updating bids {}",e.getMessage());
-            throw new BidException(Constant.INTERNAL_ERROR);
+            logger.error("error in updating bids {}", e.getMessage());
+            throw new BidException(Constant.Error.INTERNAL_ERROR);
         }
     }
 
-    public int getCountById(String postId) throws BidException {
-
-        try (Connection connection = DatabaseService.getConnection();
-             PreparedStatement statement = connection.prepareStatement(Constant.Queries.BID_COUNT_BY_ID)) {
-            System.out.println("getBidCountById");
-            statement.setInt(1, Integer.parseInt(postId));
-            ResultSet resultSet = statement.executeQuery();
-            int count = 0;
-            if (resultSet.next()) count = resultSet.getInt(1);
-            return count;
-        }catch (Exception e) {
-            logger.error("error in retrieving bids by postId {}",e.getMessage());
-            throw new BidException(Constant.INTERNAL_ERROR);
-        }
-    }
 
     public List<String> getAllAcceptedByUsername(String username) throws BidException {
 
@@ -124,8 +117,8 @@ public class BidDao {
             return works;
 
         } catch (Exception e) {
-            logger.error("error in retrieving accepted bids by postId {}",e.getMessage());
-            throw new BidException(Constant.INTERNAL_ERROR);
+            logger.error("error in retrieving accepted bids by postId {}", e.getMessage());
+            throw new BidException(Constant.Error.INTERNAL_ERROR);
         }
     }
 

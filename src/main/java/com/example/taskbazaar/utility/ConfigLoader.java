@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class ConfigLoader {
-    private static Properties properties = new Properties();
+    private static final Properties properties = new Properties();
 
     static {
         try (InputStream input = ConfigLoader.class.getClassLoader().getResourceAsStream("TaskBazaar.properties")) {

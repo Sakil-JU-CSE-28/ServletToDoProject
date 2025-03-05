@@ -4,7 +4,6 @@
 
 package com.example.taskbazaar.service;
 
-import com.example.taskbazaar.dao.UserDao;
 import com.example.taskbazaar.dto.UserDTO;
 import com.example.taskbazaar.exception.AuthenticationException;
 import com.example.taskbazaar.exception.DbException;
@@ -22,11 +21,9 @@ public class AuthenticationService {
 
     private final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
     private static volatile AuthenticationService authenticationService = null;
-    private final UserDao userDao = UserDao.getInstance();
+    private final UserService userService = UserService.getInstance();
 
-    private AuthenticationService() {
-        logger.info("AuthenticationService created");
-    }
+    private AuthenticationService() {}
 
     public static AuthenticationService getInstance() {
         if (authenticationService == null) {
@@ -43,23 +40,24 @@ public class AuthenticationService {
     public boolean authenticate(UserDTO user) throws  NoSuchAlgorithmException, DbException {
         logger.info("authenticating user :: {}", user);
         String userName = user.username();
-        UserDTO storedUser = userDao.getDetailsByUsername(userName);
+        UserDTO storedUser = userService.getUser(userName);
         String storedHashedPassword = storedUser.password();
         String storedSalt = storedUser.salt();
         String inputPassword = user.password();
+        logger.info("Generating hash password");
         String inputHashedPassword = hashPassword(inputPassword, storedSalt);
         return storedHashedPassword.equals(inputHashedPassword);
     }
 
-    public boolean register(UserDTO user) throws AuthenticationException, DbException {
-        String username = user.username();
-        String role = user.role();
+    public boolean register(UserDTO candidate) throws AuthenticationException, DbException {
+        String username = candidate.username();
+        String role = candidate.role();
         logger.info("Registering {} as {}", username, role);
-        UserDTO userInstance = userDao.getDetailsByUsername(username);
-        if (userInstance != null) {
+        UserDTO user = userService.getUser(username);
+        if (user != null) {
             throw new AuthenticationException(Constant.USER_EXISTS);
         }
-        return userDao.insert(user);
+        return userService.insert(candidate);
     }
 
     public void logOut(HttpSession session) {

@@ -8,7 +8,8 @@ public class User {
     private String username;
     private String password;
     private String role;
-    private boolean isBlocked = false;
+    private String salt;
+    private boolean isBlocked;
 
     public User(String username, String password, String role) {
         this.username = username;
@@ -27,6 +28,14 @@ public class User {
         this.isBlocked = isDeleted;
     }
 
+    public User(String userName, String password, String role, String salt, Boolean isBlocked) {
+        this.username = userName;
+        this.password = password;
+        this.role = role;
+        this.salt = salt;
+        this.isBlocked = isBlocked;
+    }
+
     public String getUsername() {
         return username;
     }
@@ -41,6 +50,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
     }
 
     public String getPassword() {
