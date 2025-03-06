@@ -31,8 +31,8 @@ public class BidService {
         return bidService;
     }
 
-    public List<String> getBidders(String postId) throws BidException {
-        return bidDao.getBiddersByPostId(postId);
+    public List<String> getAllByPostId(String postId) throws BidException {
+        return bidDao.getAllByPostId(postId);
     }
 
     public boolean placeBid(String postId, String username) throws BidException {
@@ -51,7 +51,7 @@ public class BidService {
         return bid;
     }
 
-    public List<String> getAllAccepted(String username) throws BidException {
+    public List<String> getAllAcceptedByUsername(String username) throws BidException {
         return bidDao.getAllAcceptedByUsername(username);
     }
 }

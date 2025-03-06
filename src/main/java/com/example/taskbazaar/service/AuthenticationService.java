@@ -5,9 +5,7 @@
 package com.example.taskbazaar.service;
 
 import com.example.taskbazaar.dto.UserDTO;
-import com.example.taskbazaar.exception.AuthenticationException;
 import com.example.taskbazaar.exception.DbException;
-import com.example.taskbazaar.utility.Constant;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +21,8 @@ public class AuthenticationService {
     private static volatile AuthenticationService authenticationService = null;
     private final UserService userService = UserService.getInstance();
 
-    private AuthenticationService() {}
+    private AuthenticationService() {
+    }
 
     public static AuthenticationService getInstance() {
         if (authenticationService == null) {
@@ -37,10 +36,10 @@ public class AuthenticationService {
     }
 
 
-    public boolean authenticate(UserDTO user) throws  NoSuchAlgorithmException, DbException {
+    public boolean authenticate(UserDTO user) throws NoSuchAlgorithmException, DbException {
         logger.info("authenticating user :: {}", user);
         String userName = user.username();
-        UserDTO storedUser = userService.getUser(userName);
+        UserDTO storedUser = userService.getByUsername(userName);
         String storedHashedPassword = storedUser.password();
         String storedSalt = storedUser.salt();
         String inputPassword = user.password();
@@ -49,14 +48,10 @@ public class AuthenticationService {
         return storedHashedPassword.equals(inputHashedPassword);
     }
 
-    public boolean register(UserDTO candidate) throws AuthenticationException, DbException {
+    public boolean register(UserDTO candidate) throws DbException {
         String username = candidate.username();
         String role = candidate.role();
         logger.info("Registering {} as {}", username, role);
-        UserDTO user = userService.getUser(username);
-        if (user != null) {
-            throw new AuthenticationException(Constant.USER_EXISTS);
-        }
         return userService.insert(candidate);
     }
 

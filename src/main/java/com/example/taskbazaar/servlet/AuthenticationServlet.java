@@ -7,9 +7,9 @@ import com.example.taskbazaar.dto.UserDTO;
 import com.example.taskbazaar.exception.AuthenticationException;
 import com.example.taskbazaar.exception.ValidationException;
 import com.example.taskbazaar.service.AuthenticationService;
+import com.example.taskbazaar.utility.Constants;
 import com.example.taskbazaar.utility.PopUpAlert;
 import com.example.taskbazaar.service.UserService;
-import com.example.taskbazaar.utility.Constant;
 import com.example.taskbazaar.validation.Validator;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
@@ -29,50 +29,47 @@ public class AuthenticationServlet extends BaseServlet {
             String username = request.getParameter("username");
             String password = request.getParameter("password");
             String path = request.getServletPath();
-            UserDTO user = new UserDTO(username, password, null, null, null, false);
+            UserDTO userDTO = new UserDTO(username, password, null, null, null, false);
             boolean isSuccess;
 
             if ("/login".equals(path)) {
                 logger.info("Received login request for user: {}", username);
-                validator.validateLogin(user);
+                validator.validateLogin(userDTO);
                 logger.info("Attempting to authenticate user: {}", username);
-                isSuccess = authenticationService.authenticate(user);
+                isSuccess = authenticationService.authenticate(userDTO);
                 if (isSuccess) {
                     HttpSession session = request.getSession();
                     session.setAttribute("username", username);
-                    user = userService.getUser(username);
-                    session.setAttribute("role", user.role());
+                    userDTO = userService.getByUsername(username);
+                    session.setAttribute("role", userDTO.role());
                     logger.info("User {} successfully logged in", username);
                     response.sendRedirect("/home");
                 } else {
                     logger.warn("User {} entered incorrect password", username);
-                    PopUpAlert.sendAlertAndRedirect(response, Constant.INVALID_PASSWORD, "index.jsp");
+                    PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.INVALID_PASSWORD, "index.jsp");
                 }
             } else if ("/register".equals(path)) {
                 logger.info("Received register request for user: {}", username);
                 String confirmPassword = request.getParameter("confirmPassword");
                 String role = request.getParameter("role");
-                user = new UserDTO(username, password, confirmPassword, role, null, false);
-                validator.validateRegistration(user);
+                userDTO = new UserDTO(username, password, confirmPassword, role, null, false);
+                validator.validateRegistration(userDTO);
                 logger.info("Attempting to register user: {}", username);
-                isSuccess = authenticationService.register(user);
+                isSuccess = authenticationService.register(userDTO);
                 if (isSuccess) {
                     logger.info("User {} registered successfully", username);
-                    PopUpAlert.sendAlertAndRedirect(response, Constant.SUCCESS, "index.jsp");
+                    PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.SUCCESS, "index.jsp");
                 } else {
                     logger.warn("User {} is already registered", username);
-                    PopUpAlert.sendAlertAndRedirect(response, Constant.ALREADY_REGISTERED, "index.jsp");
+                    PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.ALREADY_REGISTERED, "index.jsp");
                 }
 
             } else {
                 logger.error("Invalid request path: {} for user {}", path, username);
                 response.sendRedirect(request.getContextPath() + "pageNotFound.jsp");
             }
-        } catch (ValidationException e) {
-            logger.error("Validation error: {}", e.getMessage(), e);
-            handleError(response, e.getMessage(), request);
-        } catch (AuthenticationException e) {
-            logger.error("Authentication error: {}", e.getMessage(), e);
+        } catch (ValidationException | AuthenticationException e) {
+            logger.error("error:: {}", e.getMessage(), e);
             handleError(response, e.getMessage(), request);
         } catch (Exception e) {
             logger.error("Unexpected error: {}", e.getMessage());
@@ -89,7 +86,7 @@ public class AuthenticationServlet extends BaseServlet {
                 logger.info("User {} logging out", username);
                 HttpSession session = request.getSession(false);
                 authenticationService.logOut(session);
-                PopUpAlert.sendAlertAndRedirect(response, Constant.SUCCESS, "index.jsp");
+                PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.SUCCESS, "index.jsp");
             } else {
                 logger.error("Invalid request path: {} for logout", path);
                 response.sendRedirect(request.getContextPath() + "pageNotFound.jsp");

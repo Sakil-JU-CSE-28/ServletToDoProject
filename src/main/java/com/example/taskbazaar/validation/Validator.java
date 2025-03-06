@@ -6,8 +6,12 @@ package com.example.taskbazaar.validation;
 
 import com.example.taskbazaar.dao.UserDao;
 import com.example.taskbazaar.dto.UserDTO;
+import com.example.taskbazaar.exception.AuthenticationException;
+import com.example.taskbazaar.exception.DbException;
 import com.example.taskbazaar.exception.ValidationException;
-import com.example.taskbazaar.utility.Constant;
+import com.example.taskbazaar.model.User;
+import com.example.taskbazaar.utility.Common;
+import com.example.taskbazaar.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,68 +39,48 @@ public class Validator {
     }
 
 
-    public void validateLogin(UserDTO user) throws ValidationException {
-        validateCredentials(user,1);
-    }
-
-    public void validateRegistration(UserDTO user) throws ValidationException {
-        validateCredentials(user,2);
-    }
-
-    private void validateCredentials(UserDTO user,int validationType) throws ValidationException {
-        if (user == null) {
-            throw new ValidationException("User cannot be null");
+    public void validateLogin(UserDTO userDTO) throws ValidationException, DbException {
+        if (Common.isBlank(userDTO.username())) {
+            logger.warn("Invalid username: {}", userDTO.username());
+            throw new ValidationException(Constants.Error.USERNAME_ERROR);
         }
 
+        if (Common.isBlank(userDTO.password())) {
+            logger.warn("Invalid password: {}", userDTO.password());
+            throw new ValidationException(Constants.Error.PASSWORD_ERROR);
+        }
+
+        boolean isBlocked;
         try {
-            boolean isBlocked = userDao.checkIsBlocked(user.username());
+            isBlocked = userDao.checkIsBlocked(userDTO.username());
             if (isBlocked) {
-                logger.warn("Account is blocked for username: {}", user.username());
-                throw new ValidationException(Constant.ACCOUNT_BLOCKED);
+                logger.warn("Account is blocked for username: {}", userDTO.username());
+                throw new ValidationException(Constants.Constant.ACCOUNT_BLOCKED);
             }
-
-            validateUsername(user.username());
-            validatePassword(user,validationType);
-
-        } catch (SQLException ex) {
-            logger.error("Database error while validating user: {}", user.username(), ex);
-            throw new ValidationException(Constant.Error.INTERNAL_ERROR);
+        } catch (SQLException e) {
+            throw new DbException(Constants.Error.INTERNAL_ERROR);
         }
+
     }
 
-    private void validateUsername(String username) throws ValidationException {
-        if (username == null || username.trim().isEmpty()) {
-            logger.warn("Invalid username: {}", username);
-            throw new ValidationException(Constant.Error.USERNAME_ERROR);
-        }
-    }
-
-    private void validatePassword(UserDTO user,int validationType) throws ValidationException {
-        String password = user.password();
-        String confirmPassword = user.confirmPassword();
-
-        if (password == null || password.isEmpty()) {
-            logger.warn("Password is empty for user: {}", user.username());
-            throw new ValidationException(Constant.Error.PASSWORD_ERROR);
+    public void validateRegistration(UserDTO userDTO) throws ValidationException, DbException, AuthenticationException {
+        if (Common.isBlank(userDTO.password()) || Common.isBlank(userDTO.confirmPassword())) {
+            logger.warn("Password is empty for user: {}", userDTO.username());
+            throw new ValidationException(Constants.Error.PASSWORD_ERROR);
         }
 
-        if(validationType==1){
-            return;
+        if (!userDTO.password().equals(userDTO.confirmPassword())) {
+            logger.warn("Password and confirm password do not match for user: {}", userDTO.username());
+            throw new ValidationException(Constants.Constant.PASSWORD_NOT_MATCH);
         }
 
-        if (confirmPassword == null || confirmPassword.isEmpty()) {
-            logger.warn("Confirm password is empty for user: {}", user.username());
-            throw new ValidationException(Constant.Error.PASSWORD_ERROR);
+        if (!userDTO.confirmPassword().matches(Constants.Constant.PASSWORD_REGEX)) {
+            logger.warn("Password confirmation does not meet the regex requirement for user: {}", userDTO.username());
+            throw new ValidationException(Constants.Error.REGEX_ERROR);
         }
-
-        if (!password.equals(confirmPassword)) {
-            logger.warn("Password and confirm password do not match for user: {}", user.username());
-            throw new ValidationException(Constant.PASSWORD_NOT_MATCH);
-        }
-
-        if (!confirmPassword.matches(Constant.PASSWORD_REGEX)) {
-            logger.warn("Password confirmation does not meet the regex requirement for user: {}", user.username());
-            throw new ValidationException(Constant.Error.REGEX_ERROR);
+        User user = userDao.getByUsername(userDTO.username());
+        if (user != null) {
+            throw new AuthenticationException(Constants.Constant.USER_EXISTS);
         }
     }
 }

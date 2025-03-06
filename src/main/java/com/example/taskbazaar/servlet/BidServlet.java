@@ -9,7 +9,7 @@ import com.example.taskbazaar.service.BidService;
 import com.example.taskbazaar.service.PostService;
 import com.example.taskbazaar.utility.PopUpAlert;
 import com.example.taskbazaar.service.UserService;
-import com.example.taskbazaar.utility.Constant;
+import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,8 +36,8 @@ public class BidServlet extends BaseServlet {
             HttpSession session = request.getSession(false);
             String username = (session != null) ? (String) session.getAttribute("username") : null;
             String path = request.getServletPath();
-            UserDTO user = userService.getUser(username);
-            String role = user.role();
+            UserDTO userDTO = userService.getByUsername(username);
+            String role = userDTO.role();
             Bid bid = bidService.getById(username, Integer.parseInt(postId));
             logger.info("User {} with role {} has bid status: {}", username, role, bid);
 
@@ -47,52 +47,54 @@ public class BidServlet extends BaseServlet {
                     if (Role.FREELANCER.getValue().equals(role)) {
                         if (bid != null) {
                             logger.info("User {} attempted to place a duplicate bid for post {}", username, postId);
-                            PopUpAlert.sendAlertAndRedirect(response, Constant.ALREADY_ADDED, "/home");
+                            PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.ALREADY_ADDED, "/home");
                             return;
                         }
                         isSuccessful = bidService.placeBid(postId, username);
                         if (!isSuccessful) {
                             logger.error("Error placing bid for post {} by user {}", postId, username);
-                            PopUpAlert.sendAlertAndRedirect(response, Constant.Error.ERROR, "/home");
+                            PopUpAlert.sendAlertAndRedirect(response, Constants.Error.ERROR, "/home");
                             return;
                         }
                         logger.info("User {} successfully placed a bid for post {}", username, postId);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.SUCCESS, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.SUCCESS, "/home");
                     } else {
                         logger.info("User {} attempted to place a bid but is not a freelancer", username);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                     }
                 }
                 case "/accept" -> {
                     if (!Role.BUYER.getValue().equals(role)) {
                         logger.info("User {} with role {} tried to accept a bid, but is not a buyer", username, role);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                         return;
                     }
                     logger.info("Checking if user {} is the owner of post {}", username, postId);
-                    PostDTO post = postService.getById(Integer.parseInt(postId));
-                    if (!post.author().equals(username)) {
+                    PostDTO postDTO = postService.getById(Integer.parseInt(postId));
+                    if (!postDTO.author().equals(username)) {
                         logger.info("User {} attempted to access a bid for post {} that they do not own", username, postId);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                         return;
                     }
 
                     if (bid.isAccepted()) {
                         logger.info("User {} has already accepted the bid for post {}", username, postId);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.ALREADY_ADDED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.ALREADY_ADDED, "/home");
                         return;
                     }
-                    List<String> bidders = bidService.getBidders(postId);
+
+                    List<String> bidders = bidService.getAllByPostId(postId);
                     logger.info("User {} is reviewing bidders for post {}", username, postId);
                     request.setAttribute("bidders", bidders);
                     request.setAttribute("postId", postId);
                     RequestDispatcher dispatcher = request.getRequestDispatcher("selectBidder.jsp");
                     dispatcher.forward(request, response);
+
                 }
                 case "/addBidder" -> {
                     if (!Role.BUYER.getValue().equals(role)) {
                         logger.info("User {} with role {} attempted to add a bidder, but is not a buyer", username, role);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                         return;
                     }
                     postId = request.getParameter("postId");
@@ -100,25 +102,19 @@ public class BidServlet extends BaseServlet {
                     if (postId != null) {
                         logger.info("Adding bidder {} to post {}", selectedBidder, postId);
                         bidService.addBidder(postId, selectedBidder);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.SUCCESS, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.SUCCESS, "/home");
                     } else {
                         logger.error("Failed to add bidder for post {}", postId);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.Error.ERROR, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Error.ERROR, "/home");
                     }
                 }
                 case null, default -> {
                     logger.warn("User {} accessed an invalid page or endpoint", username);
-                    PopUpAlert.sendAlertAndRedirect(response, Constant.Error.ERROR, "pageNotFound.jsp");
+                    PopUpAlert.sendAlertAndRedirect(response, Constants.Error.ERROR, "pageNotFound.jsp");
                 }
             }
-        } catch (BidException e) {
-            logger.error("Bid processing error: {}", e.getMessage(), e);
-            handleError(response, e.getMessage(), request);
-        } catch (PostException e) {
-            logger.error("Error with post in bid operation: {}", e.getMessage(), e);
-            handleError(response, e.getMessage(), request);
-        } catch (DbException e) {
-            logger.error("Error in bid db: {}", e.getMessage(), e);
+        } catch (BidException | PostException | DbException e) {
+            logger.error("error:: {}", e.getMessage(), e);
             handleError(response, e.getMessage(), request);
         } catch (Exception e) {
             logger.error("Unexpected error: {}", e.getMessage(), e);

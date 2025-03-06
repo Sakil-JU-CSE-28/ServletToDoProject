@@ -46,7 +46,7 @@
                 </button>
             </form>
             <% } else { %>
-            <form action="unBlock" method="post">
+            <form action="unblock" method="post">
                 <input type="hidden" name="username" value="<%= user.username() %>">
                 <button type="submit" class="delete-btn"
                         onclick="return confirm('Are you sure you want to unblock this account?');">

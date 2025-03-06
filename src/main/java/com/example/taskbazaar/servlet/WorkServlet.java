@@ -27,7 +27,7 @@ public class WorkServlet extends BaseServlet {
         try {
             HttpSession session = req.getSession();
             String username = (String) session.getAttribute("username");
-            List<String> works = bidService.getAllAccepted(username);
+            List<String> works = bidService.getAllAcceptedByUsername(username);
             logger.info("{} has {} works", username, works.size());
             req.setAttribute("works", works);
             RequestDispatcher dispatcher = req.getRequestDispatcher("workHistory.jsp");
@@ -41,5 +41,4 @@ public class WorkServlet extends BaseServlet {
             forwardToErrorPage(req, res);
         }
     }
-
 }

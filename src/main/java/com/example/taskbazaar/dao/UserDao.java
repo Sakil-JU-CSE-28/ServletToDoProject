@@ -7,7 +7,7 @@ import com.example.taskbazaar.dto.UserDTO;
 import com.example.taskbazaar.exception.DbException;
 import com.example.taskbazaar.model.User;
 import com.example.taskbazaar.service.DatabaseService;
-import com.example.taskbazaar.utility.Constant;
+import com.example.taskbazaar.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +42,7 @@ public class UserDao {
 
     public User getByUsername(String username) throws DbException {
         User user = null;
-        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.FIND_USER_BY_USERNAME)) {
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constants.Queries.User.FIND_USER_BY_USERNAME)) {
             preparedStatement.setString(1, username);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -55,13 +55,13 @@ public class UserDao {
             }
         } catch (Exception e) {
             logger.error("error in retrieving user details:: {}", e.getMessage(),e);
-            throw new DbException(Constant.Error.INTERNAL_ERROR);
+            throw new DbException(Constants.Error.INTERNAL_ERROR);
         }
         return user;
     }
 
     public boolean insert(UserDTO user) throws DbException {
-        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.INSERT_USER)) {
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constants.Queries.User.INSERT_USER)) {
 
             byte[] salt = generateSalt();
             String saltString = bytesToHex(salt);
@@ -75,7 +75,7 @@ public class UserDao {
 
         } catch (Exception e) {
             logger.error("error inserting user in db:: {}", e.getMessage(),e);
-            throw new DbException(Constant.Error.INTERNAL_ERROR);
+            throw new DbException(Constants.Error.INTERNAL_ERROR);
         }
         return true;
     }
@@ -83,7 +83,7 @@ public class UserDao {
 
     public List<UserDTO> getAll() throws DbException {
         List<UserDTO> users = new ArrayList<>();
-        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constant.Queries.GET_ALL_USER)) {
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(Constants.Queries.User.GET_ALL_USER)) {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 String userName = resultSet.getString("username");
@@ -94,14 +94,14 @@ public class UserDao {
             }
         } catch (Exception e) {
             logger.error("error in retrieving all user:: {}", e.getMessage(),e);
-            throw new DbException(Constant.Error.INTERNAL_ERROR);
+            throw new DbException(Constants.Error.INTERNAL_ERROR);
         }
         return users;
     }
 
     public boolean updateBlockedStatusByUsername(String username, boolean status) throws DbException {
         boolean isBlocked = false;
-        try (Connection connection = DatabaseService.getConnection(); PreparedStatement updateStatement = connection.prepareStatement(Constant.Queries.BLOCK_USER); PreparedStatement selectStatement = connection.prepareStatement(Constant.Queries.CHECK_BLOCK_STATUS_BY_USERNAME)) {
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement updateStatement = connection.prepareStatement(Constants.Queries.User.BLOCK_USER); PreparedStatement selectStatement = connection.prepareStatement(Constants.Queries.User.CHECK_BLOCK_STATUS_BY_USERNAME)) {
             updateStatement.setBoolean(1, status);
             updateStatement.setString(2, username);
             updateStatement.executeUpdate();
@@ -120,7 +120,7 @@ public class UserDao {
 
     public boolean checkIsBlocked(String username) throws SQLException {
         boolean isBlocked = false;
-        try (Connection connection = DatabaseService.getConnection(); PreparedStatement selectStatement = connection.prepareStatement(Constant.Queries.CHECK_BLOCK_STATUS_BY_USERNAME)) {
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement selectStatement = connection.prepareStatement(Constants.Queries.User.CHECK_BLOCK_STATUS_BY_USERNAME)) {
             selectStatement.setString(1, username);
             try (ResultSet resultSet = selectStatement.executeQuery()) {
                 if (resultSet.next()) {

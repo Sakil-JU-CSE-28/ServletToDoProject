@@ -30,14 +30,11 @@ public class UserService {
     }
 
 
-    public UserDTO getUser(String username) throws DbException {
-        User retrievedUser = userDao.getByUsername(username);
+    public UserDTO getByUsername(String username) throws DbException {
+        User dbUser = userDao.getByUsername(username);
         UserDTO user = null;
-        if (retrievedUser != null) {
-            user = new UserDTO(retrievedUser.getUsername(),
-                    retrievedUser.getPassword(), null,
-                    retrievedUser.getRole(), retrievedUser.getSalt(),
-                    retrievedUser.isBlocked());
+        if (dbUser != null) {
+            user = UserDTO.toDTO(dbUser);
         }
         return user;
     }
@@ -46,15 +43,15 @@ public class UserService {
         return userDao.insert(user);
     }
 
-    public List<UserDTO> getUsers() throws DbException {
+    public List<UserDTO> getAll() throws DbException {
         return userDao.getAll();
     }
 
-    public boolean blockUser(String usernameForBlock) throws DbException {
+    public boolean block(String usernameForBlock) throws DbException {
         return userDao.updateBlockedStatusByUsername(usernameForBlock, true);
     }
 
-    public boolean unBlockUser(String usernameForUnBlock) throws DbException {
+    public boolean unblock(String usernameForUnBlock) throws DbException {
         boolean result = userDao.updateBlockedStatusByUsername(usernameForUnBlock, false);
         return !result;
     }

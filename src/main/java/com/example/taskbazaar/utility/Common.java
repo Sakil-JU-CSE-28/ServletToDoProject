@@ -56,4 +56,7 @@ public class Common {
         return bytesToHex(hashedBytes);
     }
 
+    public static boolean isBlank(String string) {
+        return string == null || string.trim().isEmpty();
+    }
 }

@@ -14,7 +14,7 @@ import com.example.taskbazaar.exception.ValidationException;
 import com.example.taskbazaar.service.PostService;
 import com.example.taskbazaar.utility.PopUpAlert;
 import com.example.taskbazaar.service.UserService;
-import com.example.taskbazaar.utility.Constant;
+import com.example.taskbazaar.utility.Constants;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,8 +57,8 @@ public class PostServlet extends BaseServlet {
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
         try {
             String username = request.getSession().getAttribute("username").toString();
-            UserDTO user = userService.getUser(username);
-            String userRole = user.role();
+            UserDTO userDTO = userService.getByUsername(username);
+            String userRole = userDTO.role();
             String path = request.getServletPath();
             switch (path) {
                 case "/save" -> {
@@ -66,7 +66,7 @@ public class PostServlet extends BaseServlet {
                     String content = request.getParameter("content");
                     if (!Role.BUYER.getValue().equals(userRole)) {
                         logger.warn("Unauthorized attempt to create post by user: {}", username);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                         return;
                     }
 
@@ -78,14 +78,14 @@ public class PostServlet extends BaseServlet {
                         response.sendRedirect("/home");
                     } else {
                         logger.warn("Post creation failed for user '{}', title '{}'.", username, title);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                     }
                 }
                 case "/delete" -> {
                     int postId = Integer.parseInt(request.getParameter("postId"));
                     if (!Role.ADMIN.getValue().equals(userRole)) {
                         logger.warn("Unauthorized delete attempt by user '{}' for post '{}'.", username, postId);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                         return;
                     }
 
@@ -96,7 +96,7 @@ public class PostServlet extends BaseServlet {
                         response.sendRedirect("/home");
                     } else {
                         logger.warn("Failed to delete post '{}' by user '{}'.", postId, username);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                     }
                 }
                 case "/edit" -> {
@@ -105,15 +105,15 @@ public class PostServlet extends BaseServlet {
                     String description = request.getParameter("content");
                     logger.info("User '{}' attempting to edit post '{}'.", username, postId);
 
-                    PostDTO post = postService.getById(Integer.parseInt(postId));
+                    PostDTO postDTO = postService.getById(Integer.parseInt(postId));
                     boolean isUpdated;
-                    if (post.author().equals(username)) {
+                    if (postDTO.author().equals(username)) {
                         isUpdated = postService.update(Integer.parseInt(postId), title, description);
                         logger.info("User '{}' successfully updated post '{}'.", username, postId);
-                        PopUpAlert.sendAlertAndRedirect(response, isUpdated ? Constant.SUCCESS : Constant.Error.ERROR, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, isUpdated ? Constants.Constant.SUCCESS : Constants.Error.ERROR, "/home");
                     } else {
                         logger.warn("User '{}' attempted to edit post '{}' but is not the owner.", username, postId);
-                        PopUpAlert.sendAlertAndRedirect(response, Constant.UNAUTHORIZED, "/home");
+                        PopUpAlert.sendAlertAndRedirect(response, Constants.Constant.UNAUTHORIZED, "/home");
                     }
 
                 }
@@ -126,8 +126,8 @@ public class PostServlet extends BaseServlet {
                         return;
                     }
 
-                    PostDTO post = postService.getById(Integer.parseInt(postId));
-                    if (post == null) {
+                    PostDTO postDTO = postService.getById(Integer.parseInt(postId));
+                    if (postDTO == null) {
                         logger.warn("Post with ID '{}' not found. Redirecting to error page.", postId);
                         request.setAttribute("errorMessage", "Post not found!");
                         request.getRequestDispatcher("error.jsp").forward(request, response);
@@ -136,7 +136,7 @@ public class PostServlet extends BaseServlet {
                     logger.info("User '{}' viewing post '{}'.", username, postId);
                     HttpSession session = request.getSession();
                     session.setAttribute("postId", postId);
-                    session.setAttribute("post", post);
+                    session.setAttribute("post", postDTO);
                     request.getRequestDispatcher("viewPost.jsp").forward(request, response);
                 }
                 case null, default -> {
@@ -144,17 +144,8 @@ public class PostServlet extends BaseServlet {
                     response.sendRedirect("pageNotFound.jsp");
                 }
             }
-        } catch (PostException e) {
-            logger.error("error in retrieving post:: {}", e.getMessage(), e);
-            handleError(response, e.getMessage(), request);
-        } catch (AuthenticationException e) {
-            logger.error("error authenticating in postservlet:: {}", e.getMessage(), e);
-            handleError(response, e.getMessage(), request);
-        } catch (ValidationException e) {
-            logger.error("error validation in postservlet:: {}", e.getMessage(), e);
-            handleError(response, e.getMessage(), request);
-        } catch (BidException e) {
-            logger.error("error bid:: {}", e.getMessage(), e);
+        } catch (PostException | AuthenticationException | ValidationException | BidException e) {
+            logger.error("error occurred:: {}", e.getMessage(), e);
             handleError(response, e.getMessage(), request);
         } catch (Exception e) {
             logger.error("Unexpected error occurred: {}", e.getMessage(), e);

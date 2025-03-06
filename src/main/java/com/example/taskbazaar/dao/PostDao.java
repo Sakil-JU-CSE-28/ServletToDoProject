@@ -7,7 +7,7 @@ package com.example.taskbazaar.dao;
 import com.example.taskbazaar.dto.PostDTO;
 import com.example.taskbazaar.exception.PostException;
 import com.example.taskbazaar.service.DatabaseService;
-import com.example.taskbazaar.utility.Constant;
+import com.example.taskbazaar.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ public class PostDao {
 
     public List<PostDTO> getPosts() throws PostException {
         List<PostDTO> posts = new ArrayList<>();
-        try (Connection connection = DatabaseService.getConnection(); Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(Constant.Queries.ALL_POSTS_BY_DESC)) {
+        try (Connection connection = DatabaseService.getConnection(); Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(Constants.Queries.Post.ALL_POSTS_BY_DESC)) {
             while (rs.next()) {
                 int postId = rs.getInt("id");
                 String title = rs.getString("title");
@@ -46,13 +46,13 @@ public class PostDao {
             }
         } catch (Exception e) {
             logger.error("error in retrieving all post:: {}", e.getMessage());
-            throw new PostException(Constant.Error.INTERNAL_ERROR);
+            throw new PostException(Constants.Error.INTERNAL_ERROR);
         }
         return posts;
     }
 
     public boolean add(PostDTO postDTO) throws PostException {
-        try (Connection connection = DatabaseService.getConnection(); PreparedStatement stmt = connection.prepareStatement(Constant.Queries.ADD_POST)) {
+        try (Connection connection = DatabaseService.getConnection(); PreparedStatement stmt = connection.prepareStatement(Constants.Queries.Post.ADD_POST)) {
             stmt.setString(1, postDTO.title());
             stmt.setString(2, postDTO.content());
             stmt.setString(3, postDTO.author());
@@ -60,22 +60,22 @@ public class PostDao {
             return true;
         } catch (Exception e) {
             logger.error("error in adding post:: {}", e.getMessage());
-            throw new PostException(Constant.Error.INTERNAL_ERROR);
+            throw new PostException(Constants.Error.INTERNAL_ERROR);
         }
     }
 
     public boolean delete(int postId) throws PostException {
-        try (Connection conn = DatabaseService.getConnection(); PreparedStatement stmt = conn.prepareStatement(Constant.Queries.DELETE_POST_BY_ID)) {
+        try (Connection conn = DatabaseService.getConnection(); PreparedStatement stmt = conn.prepareStatement(Constants.Queries.Post.DELETE_POST_BY_ID)) {
             stmt.setString(1, String.valueOf(postId));
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             logger.error("error in deleting post:: {}", e.getMessage());
-            throw new PostException(Constant.Error.INTERNAL_ERROR);
+            throw new PostException(Constants.Error.INTERNAL_ERROR);
         }
     }
 
     public boolean update(PostDTO postDTO) throws PostException {
-        try (Connection conn = DatabaseService.getConnection(); PreparedStatement stmnt = conn.prepareStatement(Constant.Queries.UPDATE_POST_BY_ID)) {
+        try (Connection conn = DatabaseService.getConnection(); PreparedStatement stmnt = conn.prepareStatement(Constants.Queries.Post.UPDATE_POST_BY_ID)) {
             stmnt.setString(1, postDTO.title());
             stmnt.setString(2, postDTO.content());
             stmnt.setInt(3, postDTO.postId());
@@ -83,13 +83,13 @@ public class PostDao {
             return rowsUpdated > 0;
         } catch (Exception e) {
             logger.error("error in updating post:: {}", e.getMessage());
-            throw new PostException(Constant.Error.INTERNAL_ERROR);
+            throw new PostException(Constants.Error.INTERNAL_ERROR);
         }
     }
 
     public PostDTO getById(int postId) throws PostException {
         try (Connection conn = DatabaseService.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(Constant.Queries.POST_BY_ID)) {
+             PreparedStatement stmt = conn.prepareStatement(Constants.Queries.Post.POST_BY_ID)) {
 
             stmt.setInt(1, postId);
 
@@ -103,7 +103,7 @@ public class PostDao {
             }
         } catch (Exception e) {
             logger.error("error in retrieving post by id:: {}", e.getMessage(),e);
-            throw new PostException(Constant.Error.INTERNAL_ERROR);
+            throw new PostException(Constants.Error.INTERNAL_ERROR);
         }
         return null;
     }
